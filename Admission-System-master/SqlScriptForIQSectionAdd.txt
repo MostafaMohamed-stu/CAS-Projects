@@ -1,0 +1,537 @@
+/*
+    School Admission - complete IQ and configurable-settings database upgrade
+
+    Run this script against the SCHOOL database before deploying the IQ-enabled
+    backend. Take a database backup first.
+
+    The script is transactional and safe to rerun. It:
+      1. Adds dbo.StudentExamResult.ExamIQScore as nullable.
+      2. Preserves all historical rows with ExamIQScore = NULL.
+      3. Removes legacy upper-bound checks from all exam score columns.
+      4. Adds only non-negative score checks (no maximum limits).
+      5. Adds the IQ section if it does not already exist.
+      6. Adds immutable admission/exam settings versions.
+      7. Adds the per-student settings and server-timer assignment table.
+      8. Maps completed legacy students to their historical calculation version.
+      9. Removes stale assignments from students who never started an exam.
+
+    Production defaults for students who start after deployment:
+      - Final result: School Exam 60%, Interview 40%.
+      - Subjects: Arabic 15, English 30, Math 30, Software 10, IQ 15.
+      - 10 questions per section, incomplete banks allowed, 60 minutes.
+
+    Saving settings later creates new version rows. It does not update or
+    recalculate completed students or students whose exams already started.
+*/
+
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    IF OBJECT_ID(N'dbo.StudentExamResult', N'U') IS NULL
+        THROW 51000, 'Required table dbo.StudentExamResult was not found. No changes were applied.', 1;
+
+    IF OBJECT_ID(N'dbo.Section', N'U') IS NULL
+        THROW 51001, 'Required table dbo.Section was not found. No changes were applied.', 1;
+
+    IF COL_LENGTH(N'dbo.StudentExamResult', N'ExamArabicScore') IS NULL
+       OR COL_LENGTH(N'dbo.StudentExamResult', N'ExamEnglishScore') IS NULL
+       OR COL_LENGTH(N'dbo.StudentExamResult', N'ExamMathScore') IS NULL
+       OR COL_LENGTH(N'dbo.StudentExamResult', N'ExamSoftwareScore') IS NULL
+    BEGIN
+        THROW 51002, 'One or more existing exam score columns were not found. No changes were applied.', 1;
+    END;
+
+    IF COL_LENGTH(N'dbo.StudentExamResult', N'ExamIQScore') IS NULL
+    BEGIN
+        -- Nullable is required: NULL identifies students from the legacy cohort.
+        ALTER TABLE dbo.StudentExamResult
+            ADD ExamIQScore int NULL;
+    END;
+    ELSE
+    BEGIN
+        -- Repair a partially applied migration while preserving existing values.
+        EXEC sys.sp_executesql
+            N'ALTER TABLE dbo.StudentExamResult ALTER COLUMN ExamIQScore int NULL;';
+    END;
+
+    -- ExamIQScore must not have a default. New results explicitly set IQ, while
+    -- historical rows must remain NULL for legacy scoring.
+    DECLARE @iqDefaultConstraint sysname;
+    DECLARE @dropDefaultSql nvarchar(max);
+
+    SELECT @iqDefaultConstraint = dc.name
+    FROM sys.default_constraints AS dc
+    INNER JOIN sys.columns AS c
+        ON c.object_id = dc.parent_object_id
+       AND c.column_id = dc.parent_column_id
+    WHERE dc.parent_object_id = OBJECT_ID(N'dbo.StudentExamResult')
+      AND c.name = N'ExamIQScore';
+
+    IF @iqDefaultConstraint IS NOT NULL
+    BEGIN
+        SET @dropDefaultSql =
+            N'ALTER TABLE dbo.StudentExamResult DROP CONSTRAINT ' +
+            QUOTENAME(@iqDefaultConstraint) + N';';
+        EXEC sys.sp_executesql @dropDefaultSql;
+    END;
+
+    /*
+        Drop every CHECK constraint that references an exam score column.
+        This handles both explicitly named and SQL Server-generated legacy
+        constraints, including combined constraints with upper limits.
+    */
+    DECLARE @dropChecksSql nvarchar(max) = N'';
+
+    SELECT @dropChecksSql = @dropChecksSql +
+        N'ALTER TABLE dbo.StudentExamResult DROP CONSTRAINT ' +
+        QUOTENAME(cc.name) + N';' + CHAR(13) + CHAR(10)
+    FROM sys.check_constraints AS cc
+    WHERE cc.parent_object_id = OBJECT_ID(N'dbo.StudentExamResult')
+      AND (
+          cc.definition LIKE N'%ExamArabicScore%'
+          OR cc.definition LIKE N'%ExamEnglishScore%'
+          OR cc.definition LIKE N'%ExamMathScore%'
+          OR cc.definition LIKE N'%ExamSoftwareScore%'
+          OR cc.definition LIKE N'%ExamIQScore%'
+      );
+
+    IF @dropChecksSql <> N''
+        EXEC sys.sp_executesql @dropChecksSql;
+
+    -- Fail clearly if invalid negative data exists instead of leaving the
+    -- database partially migrated.
+    DECLARE @hasNegativeExamScore bit = 0;
+
+    EXEC sys.sp_executesql
+        N'
+            SELECT @hasNegative = CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM dbo.StudentExamResult
+                    WHERE ExamArabicScore < 0
+                       OR ExamEnglishScore < 0
+                       OR ExamMathScore < 0
+                       OR ExamSoftwareScore < 0
+                       OR ExamIQScore < 0
+                )
+                THEN 1
+                ELSE 0
+            END;
+        ',
+        N'@hasNegative bit OUTPUT',
+        @hasNegative = @hasNegativeExamScore OUTPUT;
+
+    IF @hasNegativeExamScore = 1
+    BEGIN
+        THROW 51003, 'Negative exam scores exist. Correct them before running this migration.', 1;
+    END;
+
+    -- These constraints intentionally have no upper limits.
+    ALTER TABLE dbo.StudentExamResult WITH CHECK
+        ADD CONSTRAINT CK_StudentExamResult_ArabicScore
+            CHECK (ExamArabicScore >= 0);
+
+    ALTER TABLE dbo.StudentExamResult WITH CHECK
+        ADD CONSTRAINT CK_StudentExamResult_EnglishScore
+            CHECK (ExamEnglishScore >= 0);
+
+    ALTER TABLE dbo.StudentExamResult WITH CHECK
+        ADD CONSTRAINT CK_StudentExamResult_MathScore
+            CHECK (ExamMathScore >= 0);
+
+    ALTER TABLE dbo.StudentExamResult WITH CHECK
+        ADD CONSTRAINT CK_StudentExamResult_SoftwareScore
+            CHECK (ExamSoftwareScore >= 0);
+
+    EXEC sys.sp_executesql
+        N'
+            ALTER TABLE dbo.StudentExamResult WITH CHECK
+                ADD CONSTRAINT CK_StudentExamResult_IQScore
+                    CHECK (ExamIQScore IS NULL OR ExamIQScore >= 0);
+        ';
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM dbo.Section
+        WHERE LTRIM(RTRIM(SectionName)) = N'IQ'
+    )
+    BEGIN
+        INSERT INTO dbo.Section (SectionName)
+        VALUES (N'IQ');
+    END;
+
+    IF OBJECT_ID(N'dbo.Account', N'U') IS NULL
+        THROW 51004, 'Required table dbo.Account was not found. No changes were applied.', 1;
+
+    /*
+        Each SuperAdmin save creates a new immutable row. Only one version is
+        active for students who have not started an exam yet.
+    */
+    IF OBJECT_ID(N'dbo.AdmissionSettingsVersion', N'U') IS NULL
+    BEGIN
+        EXEC sys.sp_executesql N'
+            CREATE TABLE dbo.AdmissionSettingsVersion
+            (
+                Id bigint IDENTITY(1,1) NOT NULL
+                    CONSTRAINT PK_AdmissionSettingsVersion PRIMARY KEY,
+                VersionNumber int NOT NULL,
+                VersionName nvarchar(150) NOT NULL,
+                IsActive bit NOT NULL,
+
+                SchoolExamEnabled bit NOT NULL,
+                SchoolExamWeight int NOT NULL,
+                InterviewEnabled bit NOT NULL,
+                InterviewWeight int NOT NULL,
+                PreparatoryCertificateEnabled bit NOT NULL,
+                PreparatoryCertificateWeight int NOT NULL,
+                MinistryExamEnabled bit NOT NULL,
+                MinistryExamWeight int NOT NULL,
+
+                ArabicWeight int NOT NULL,
+                EnglishWeight int NOT NULL,
+                MathWeight int NOT NULL,
+                SoftwareWeight int NOT NULL,
+                IqWeight int NOT NULL,
+
+                QuestionsPerSection int NOT NULL,
+                RequireFullQuestionSet bit NOT NULL,
+                ExamDurationMinutes int NOT NULL,
+                CreatedAtUtc datetime2 NOT NULL,
+                CreatedByAccountId bigint NULL
+            );
+        ';
+    END;
+
+    -- Stop safely if an incompatible partial settings table already exists.
+    IF COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'Id') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'VersionNumber') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'VersionName') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'IsActive') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'SchoolExamEnabled') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'SchoolExamWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'InterviewEnabled') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'InterviewWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'PreparatoryCertificateEnabled') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'PreparatoryCertificateWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'MinistryExamEnabled') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'MinistryExamWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'ArabicWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'EnglishWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'MathWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'SoftwareWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'IqWeight') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'QuestionsPerSection') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'RequireFullQuestionSet') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'ExamDurationMinutes') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'CreatedAtUtc') IS NULL
+       OR COL_LENGTH(N'dbo.AdmissionSettingsVersion', N'CreatedByAccountId') IS NULL
+    BEGIN
+        THROW 51005, 'dbo.AdmissionSettingsVersion exists with an incompatible schema. No changes were applied.', 1;
+    END;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM sys.indexes
+        WHERE object_id = OBJECT_ID(N'dbo.AdmissionSettingsVersion')
+          AND name = N'UX_AdmissionSettingsVersion_VersionNumber'
+    )
+    BEGIN
+        EXEC sys.sp_executesql N'
+            CREATE UNIQUE INDEX UX_AdmissionSettingsVersion_VersionNumber
+                ON dbo.AdmissionSettingsVersion(VersionNumber);
+        ';
+    END;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM sys.indexes
+        WHERE object_id = OBJECT_ID(N'dbo.AdmissionSettingsVersion')
+          AND name = N'UX_AdmissionSettingsVersion_OneActive'
+    )
+    BEGIN
+        EXEC sys.sp_executesql N'
+            CREATE UNIQUE INDEX UX_AdmissionSettingsVersion_OneActive
+                ON dbo.AdmissionSettingsVersion(IsActive)
+                WHERE IsActive = 1;
+        ';
+    END;
+
+    -- Dynamic SQL keeps the script parse-safe when the settings table is created
+    -- in this same execution batch.
+    EXEC sys.sp_executesql N'
+        IF NOT EXISTS
+        (
+            SELECT 1 FROM dbo.AdmissionSettingsVersion WHERE VersionNumber = 1
+        )
+        BEGIN
+            INSERT dbo.AdmissionSettingsVersion
+            (
+                VersionNumber, VersionName, IsActive,
+                SchoolExamEnabled, SchoolExamWeight,
+                InterviewEnabled, InterviewWeight,
+                PreparatoryCertificateEnabled, PreparatoryCertificateWeight,
+                MinistryExamEnabled, MinistryExamWeight,
+                ArabicWeight, EnglishWeight, MathWeight, SoftwareWeight, IqWeight,
+                QuestionsPerSection, RequireFullQuestionSet, ExamDurationMinutes,
+                CreatedAtUtc, CreatedByAccountId
+            )
+            VALUES
+            (
+                1, N''Legacy pre-IQ baseline'', 0,
+                1, 60, 1, 40, 0, 0, 0, 0,
+                15, 15, 15, 15, 0,
+                10, 0, 60, SYSUTCDATETIME(), NULL
+            );
+        END;
+
+        IF NOT EXISTS
+        (
+            SELECT 1 FROM dbo.AdmissionSettingsVersion WHERE VersionNumber = 2
+        )
+        BEGIN
+            INSERT dbo.AdmissionSettingsVersion
+            (
+                VersionNumber, VersionName, IsActive,
+                SchoolExamEnabled, SchoolExamWeight,
+                InterviewEnabled, InterviewWeight,
+                PreparatoryCertificateEnabled, PreparatoryCertificateWeight,
+                MinistryExamEnabled, MinistryExamWeight,
+                ArabicWeight, EnglishWeight, MathWeight, SoftwareWeight, IqWeight,
+                QuestionsPerSection, RequireFullQuestionSet, ExamDurationMinutes,
+                CreatedAtUtc, CreatedByAccountId
+            )
+            VALUES
+            (
+                2, N''Original IQ baseline'', 0,
+                1, 60, 1, 40, 0, 0, 0, 0,
+                15, 30, 30, 15, 10,
+                10, 0, 60, SYSUTCDATETIME(), NULL
+            );
+        END;
+
+        IF NOT EXISTS
+        (
+            SELECT 1 FROM dbo.AdmissionSettingsVersion WHERE VersionNumber = 3
+        )
+        BEGIN
+            INSERT dbo.AdmissionSettingsVersion
+            (
+                VersionNumber, VersionName, IsActive,
+                SchoolExamEnabled, SchoolExamWeight,
+                InterviewEnabled, InterviewWeight,
+                PreparatoryCertificateEnabled, PreparatoryCertificateWeight,
+                MinistryExamEnabled, MinistryExamWeight,
+                ArabicWeight, EnglishWeight, MathWeight, SoftwareWeight, IqWeight,
+                QuestionsPerSection, RequireFullQuestionSet, ExamDurationMinutes,
+                CreatedAtUtc, CreatedByAccountId
+            )
+            VALUES
+            (
+                3, N''2027 default configuration'',
+                CASE
+                    WHEN EXISTS
+                    (
+                        SELECT 1 FROM dbo.AdmissionSettingsVersion WHERE IsActive = 1
+                    ) THEN 0 ELSE 1
+                END,
+                1, 60, 1, 40, 0, 0, 0, 0,
+                15, 30, 30, 10, 15,
+                10, 0, 60, SYSUTCDATETIME(), NULL
+            );
+        END;
+    ';
+
+    /*
+        One row per student freezes the settings version and stores the
+        authoritative UTC timer start. It is created only when the exam starts.
+    */
+    IF OBJECT_ID(N'dbo.StudentSettingsAssignment', N'U') IS NULL
+    BEGIN
+        EXEC sys.sp_executesql N'
+            CREATE TABLE dbo.StudentSettingsAssignment
+            (
+                AccountId bigint NOT NULL
+                    CONSTRAINT PK_StudentSettingsAssignment PRIMARY KEY,
+                SettingsVersionId bigint NOT NULL,
+                AssignedAtUtc datetime2 NOT NULL,
+                ExamStartedAtUtc datetime2 NULL,
+                ExtensionMinutes int NOT NULL
+                    CONSTRAINT DF_StudentSettingsAssignment_ExtensionMinutes DEFAULT (0),
+                CONSTRAINT FK_StudentSettingsAssignment_Account
+                    FOREIGN KEY (AccountId) REFERENCES dbo.Account(Id) ON DELETE CASCADE,
+                CONSTRAINT FK_StudentSettingsAssignment_SettingsVersion
+                    FOREIGN KEY (SettingsVersionId) REFERENCES dbo.AdmissionSettingsVersion(Id)
+            );
+        ';
+    END;
+
+    IF COL_LENGTH(N'dbo.StudentSettingsAssignment', N'AccountId') IS NULL
+       OR COL_LENGTH(N'dbo.StudentSettingsAssignment', N'SettingsVersionId') IS NULL
+       OR COL_LENGTH(N'dbo.StudentSettingsAssignment', N'AssignedAtUtc') IS NULL
+    BEGIN
+        THROW 51006, 'dbo.StudentSettingsAssignment exists with an incompatible schema. No changes were applied.', 1;
+    END;
+
+    IF COL_LENGTH(N'dbo.StudentSettingsAssignment', N'ExamStartedAtUtc') IS NULL
+    BEGIN
+        EXEC sys.sp_executesql N'
+            ALTER TABLE dbo.StudentSettingsAssignment
+                ADD ExamStartedAtUtc datetime2 NULL;
+        ';
+    END;
+
+    IF COL_LENGTH(N'dbo.StudentSettingsAssignment', N'ExtensionMinutes') IS NULL
+    BEGIN
+        EXEC sys.sp_executesql N'
+            ALTER TABLE dbo.StudentSettingsAssignment
+                ADD ExtensionMinutes int NOT NULL
+                    CONSTRAINT DF_StudentSettingsAssignment_ExtensionMinutes
+                    DEFAULT (0) WITH VALUES;
+        ';
+    END;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM sys.indexes
+        WHERE object_id = OBJECT_ID(N'dbo.StudentSettingsAssignment')
+          AND name = N'IX_StudentSettingsAssignment_SettingsVersionId'
+    )
+    BEGIN
+        EXEC sys.sp_executesql N'
+            CREATE INDEX IX_StudentSettingsAssignment_SettingsVersionId
+                ON dbo.StudentSettingsAssignment(SettingsVersionId);
+        ';
+    END;
+
+    -- Existing results are assigned to immutable historical formulas. IQ NULL
+    -- identifies the pre-IQ cohort; an IQ value identifies the original IQ cohort.
+    EXEC sys.sp_executesql N'
+        INSERT dbo.StudentSettingsAssignment
+        (
+            AccountId,
+            SettingsVersionId,
+            AssignedAtUtc,
+            ExamStartedAtUtc,
+            ExtensionMinutes
+        )
+        SELECT
+            result.AccountId,
+            settings.Id,
+            SYSUTCDATETIME(),
+            NULL,
+            0
+        FROM dbo.StudentExamResult AS result
+        INNER JOIN dbo.AdmissionSettingsVersion AS settings
+            ON settings.VersionNumber =
+                CASE WHEN result.ExamIQScore IS NULL THEN 1 ELSE 2 END
+        WHERE NOT EXISTS
+        (
+            SELECT 1
+            FROM dbo.StudentSettingsAssignment AS assignment
+            WHERE assignment.AccountId = result.AccountId
+        );
+
+        DELETE assignment
+        FROM dbo.StudentSettingsAssignment AS assignment
+        LEFT JOIN dbo.StudentExamResult AS result
+            ON result.AccountId = assignment.AccountId
+        WHERE result.AccountId IS NULL
+          AND assignment.ExamStartedAtUtc IS NULL;
+    ';
+
+    COMMIT TRANSACTION;
+
+    PRINT 'Complete IQ and configurable-settings database upgrade completed successfully.';
+
+    -- Post-run verification.
+    SELECT
+        c.name AS ColumnName,
+        TYPE_NAME(c.user_type_id) AS DataType,
+        c.is_nullable AS IsNullable
+    FROM sys.columns AS c
+    WHERE c.object_id = OBJECT_ID(N'dbo.StudentExamResult')
+      AND c.name = N'ExamIQScore';
+
+    SELECT
+        cc.name AS ConstraintName,
+        cc.definition AS ConstraintDefinition,
+        cc.is_disabled AS IsDisabled,
+        cc.is_not_trusted AS IsNotTrusted
+    FROM sys.check_constraints AS cc
+    WHERE cc.parent_object_id = OBJECT_ID(N'dbo.StudentExamResult')
+      AND cc.name LIKE N'CK_StudentExamResult_%'
+    ORDER BY cc.name;
+
+    SELECT Id, SectionName
+    FROM dbo.Section
+    WHERE LTRIM(RTRIM(SectionName)) = N'IQ';
+
+    EXEC sys.sp_executesql
+        N'
+            SELECT
+                SUM(CASE WHEN ExamIQScore IS NULL THEN 1 ELSE 0 END) AS LegacyResultCount,
+                SUM(CASE WHEN ExamIQScore IS NOT NULL THEN 1 ELSE 0 END) AS IqResultCount,
+                COUNT(*) AS TotalResultCount
+            FROM dbo.StudentExamResult;
+        ';
+
+    EXEC sys.sp_executesql N'
+        SELECT
+            VersionNumber,
+            VersionName,
+            IsActive,
+            SchoolExamWeight,
+            InterviewWeight,
+            ArabicWeight,
+            EnglishWeight,
+            MathWeight,
+            SoftwareWeight,
+            IqWeight,
+            QuestionsPerSection,
+            RequireFullQuestionSet,
+            ExamDurationMinutes,
+            CreatedAtUtc
+        FROM dbo.AdmissionSettingsVersion
+        ORDER BY VersionNumber;
+
+        SELECT
+            COUNT(*) AS PreservedCompletedStudentAssignments
+        FROM dbo.StudentSettingsAssignment AS assignment
+        WHERE EXISTS
+        (
+            SELECT 1
+            FROM dbo.StudentExamResult AS result
+            WHERE result.AccountId = assignment.AccountId
+        );
+
+        SELECT
+            COUNT(*) AS StaleUnstartedAssignments
+        FROM dbo.StudentSettingsAssignment AS assignment
+        WHERE assignment.ExamStartedAtUtc IS NULL
+          AND NOT EXISTS
+          (
+              SELECT 1
+              FROM dbo.StudentExamResult AS result
+              WHERE result.AccountId = assignment.AccountId
+          );
+    ';
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;
+
+    THROW;
+END CATCH;

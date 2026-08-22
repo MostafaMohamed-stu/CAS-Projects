@@ -1,0 +1,40 @@
+/* src/Components/Layout/Styles/SidebarLayout.css (Synchronized from AttendanceBehaviour-Frontend) */
+
+.dashboard-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-body);
+    width: 100%;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Sidebar closed state for main content */
+.sidebar-closed .main-content {
+    margin-left: 0;
+}
+
+/* Desktop: Sidebar open state */
+@media (min-width: 993px) {
+    .sidebar-open .main-content {
+        margin-left: var(--sidebar-width);
+    }
+}
+
+/* Mobile: Overlay */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+/* Sidebar Animation */
+.sidebar-container {
+    transition: all var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+}

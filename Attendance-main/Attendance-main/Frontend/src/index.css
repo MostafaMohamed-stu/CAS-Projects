@@ -1,0 +1,119 @@
+/* Reset or empty if not needed */
+
+/* Notification styles */
+.notification-icon-container {
+    position: relative;
+    cursor: pointer;
+    margin-left: auto; /* Pushes it to the right */
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.notification-icon-container:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.notification-icon {
+    font-size: 24px;
+    color: white;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background-color: #dc2626; /* Red */
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 2px 6px;
+    min-width: 20px;
+    text-align: center;
+    border: 1px solid white;
+}
+
+.notifications-dropdown {
+    position: absolute;
+    top: 60px; /* Adjust based on sidebar header height */
+    right: 10px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    color: #333;
+}
+
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.dropdown-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.dropdown-header button {
+    background: none;
+    border: none;
+    color: #007bff; /* Blue */
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.dropdown-header button:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.dropdown-body {
+    padding: 0;
+}
+
+.no-notifications {
+    padding: 15px;
+    text-align: center;
+    color: #777;
+}
+
+.notification-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background-color: #f8f8f8;
+}
+
+.notification-item.read {
+    background-color: #f0f0f0;
+    color: #777;
+}
+
+.notification-item p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.notification-date {
+    font-size: 11px;
+    color: #999;
+    margin-top: 5px;
+    display: block;
+}

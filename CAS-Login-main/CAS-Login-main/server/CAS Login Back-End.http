@@ -1,0 +1,6 @@
+@CAS_Login_Back_End_HostAddress = http://localhost:5148
+
+GET {{CAS_Login_Back_End_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

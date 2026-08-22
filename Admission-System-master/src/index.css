@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f3f4f6; /* light gray, matches your site background */
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ef3131; /* your brand red */
+  border-radius: 8px;
+  border: 2px solid #f3f4f6; /* creates a gap effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c41e1e; /* darker red on hover */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ef3131 #f3f4f6;
+}
+
+/* Cursor pointer for all clickable elements */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select,
+a,
+.card,
+.clickable,
+[onclick],
+[data-clickable="true"] {
+  cursor: pointer !important;
+}
+
+/* Ensure buttons and interactive elements show pointer */
+.btn,
+.button,
+.nav-link,
+.dropdown-item,
+.modal-close,
+.sort-button,
+.filter-button {
+  cursor: pointer !important;
+}
+
+/* Table rows that are clickable */
+tr[onclick],
+tr[data-clickable="true"],
+.table-row-clickable {
+  cursor: pointer !important;
+}
+
+/* Form elements that are interactive */
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  cursor: pointer !important;
+}
+
+/* Custom components that should be clickable */
+[data-testid*="button"],
+[data-testid*="link"],
+[data-testid*="clickable"] {
+  cursor: pointer !important;
+}
+
+/* Custom Animations for Footer */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* Neon Glow Effects */
+.neon-glow {
+  box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor,
+    0 0 20px currentColor;
+}
+
+.neon-glow-purple {
+  box-shadow: 0 0 5px #a855f7, 0 0 10px #a855f7, 0 0 15px #a855f7,
+    0 0 20px #a855f7;
+}
+
+.neon-glow-cyan {
+  box-shadow: 0 0 5px #06b6d4, 0 0 10px #06b6d4, 0 0 15px #06b6d4,
+    0 0 20px #06b6d4;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Pulse with Color */
+@keyframes pulse-purple {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(168, 85, 247, 0);
+  }
+}
+
+.animate-pulse-purple {
+  animation: pulse-purple 2s infinite;
+}
+
+@keyframes pulse-cyan {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(6, 182, 212, 0);
+  }
+}
+
+.animate-pulse-cyan {
+  animation: pulse-cyan 2s infinite;
+}
+
+/* Dark Gothic Neon Effects */
+.neon-glow-red {
+  box-shadow: 0 0 5px #dc2626, 0 0 10px #dc2626, 0 0 15px #dc2626,
+    0 0 20px #dc2626;
+}
+
+.neon-glow-gray {
+  box-shadow: 0 0 5px #6b7280, 0 0 10px #6b7280, 0 0 15px #6b7280,
+    0 0 20px #6b7280;
+}
+
+/* Dark Pulse Effects */
+@keyframes pulse-red {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+}
+
+.animate-pulse-red {
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-gray {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(107, 114, 128, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(107, 114, 128, 0);
+  }
+}
+
+.animate-pulse-gray {
+  animation: pulse-gray 2s infinite;
+}
+
+/* Gothic Shadow Effect */
+.gothic-shadow {
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.3),
+    0 4px 6px -1px rgba(0, 0, 0, 0.8), 0 10px 15px -3px rgba(0, 0, 0, 0.9);
+}
+
+/* Dark Glow */
+.dark-glow {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(0, 0, 0, 0.8);
+}

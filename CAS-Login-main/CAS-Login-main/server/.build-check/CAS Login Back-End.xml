@@ -1,0 +1,434 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CAS Login Back-End</name>
+    </assembly>
+    <members>
+        <member name="T:CAS_Login_Back_End.Controllers.AccountController">
+            <summary>
+            Account controller for user registration, profile management, and password operations.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AccountController.RegisterAsync(CAS_Login_Back_End.Models.Requests.RegisterRequest,System.Threading.CancellationToken)">
+            <summary>
+            Registers a new user account.
+            </summary>
+            <remarks>
+            POST /api/account/register
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AccountController.GetProfileAsync(System.Threading.CancellationToken)">
+            <summary>
+            Retrieves current user profile.
+            </summary>
+            <remarks>
+            GET /api/account/profile
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AccountController.UpdateProfileAsync(CAS_Login_Back_End.Models.Requests.UpdateProfileRequest,System.Threading.CancellationToken)">
+            <summary>
+            Updates current user profile.
+            </summary>
+            <remarks>
+            PUT /api/account/profile
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AccountController.ChangePasswordAsync(CAS_Login_Back_End.Models.Requests.ChangePasswordRequest,System.Threading.CancellationToken)">
+            <summary>
+            Changes password for current user.
+            </summary>
+            <remarks>
+            POST /api/account/change-password
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AccountController.ForgotPasswordAsync(CAS_Login_Back_End.Models.Requests.ForgotPasswordRequest,System.Threading.CancellationToken)">
+            <summary>
+            Initiates forgot password flow.
+            </summary>
+            <remarks>
+            POST /api/account/forgot-password
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AccountController.ResetPasswordAsync(CAS_Login_Back_End.Models.Requests.ResetPasswordRequest,System.Threading.CancellationToken)">
+            <summary>
+            Resets password using reset token.
+            </summary>
+            <remarks>
+            POST /api/account/reset-password
+            </remarks>
+        </member>
+        <member name="T:CAS_Login_Back_End.Controllers.AuthController">
+            <summary>
+            Authentication controller for login, token exchange, and validation.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AuthController.LoginAsync(CAS_Login_Back_End.Models.Requests.LoginRequest,System.Threading.CancellationToken)">
+            <summary>
+            Authenticates a user and returns both the SSO token and the System JWT.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AuthController.ExchangeTokenAsync(CAS_Login_Back_End.Models.Requests.ExchangeTokenRequest,System.Threading.CancellationToken)">
+            <summary>
+            Exchanges a valid SSO token for a System JWT belonging to another Business Entity.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AuthController.ValidateTokenAsync(System.Threading.CancellationToken)">
+            <summary>
+            Validates an SSO or System JWT.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.AuthController.GetBearerToken">
+            <summary>
+            Extracts the Bearer token from the Authorization header.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Controllers.BusinessEntityController">
+            <summary>
+            Business entity controller for business entity management.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.BusinessEntityController.GetAllAsync(System.Threading.CancellationToken)">
+            <summary>
+            Retrieves all active business entities.
+            </summary>
+            <remarks>
+            GET /api/businessentity
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.BusinessEntityController.GetByNameAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves a specific business entity by name.
+            </summary>
+            <remarks>
+            GET /api/businessentity/{name}
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.BusinessEntityController.GetMyEntitiesAsync(System.Threading.CancellationToken)">
+            <summary>
+            Retrieves all business entities accessible to the current user.
+            </summary>
+            <remarks>
+            GET /api/businessentity/my-entities
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="T:CAS_Login_Back_End.Controllers.RoleController">
+            <summary>
+            Role controller for role management.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.RoleController.GetAllAsync(System.Threading.CancellationToken)">
+            <summary>
+            Retrieves all active roles.
+            </summary>
+            <remarks>
+            GET /api/role
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.RoleController.GetByIdAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves a specific role by ID.
+            </summary>
+            <remarks>
+            GET /api/role/{id}
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="M:CAS_Login_Back_End.Controllers.RoleController.GetAccountRoleAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves the role of the current user in a business entity.
+            </summary>
+            <remarks>
+            GET /api/role/account/{businessEntityName}
+            Authorization: Bearer {TOKEN}
+            </remarks>
+        </member>
+        <member name="T:CAS_Login_Back_End.Data.Entities.ExamQuestionBank">
+            <summary>
+            IN Exam Hub it links an Exam to its childern questions.
+            IN Genz_coders it links a courseRound to its childern questions.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Exceptions.NotFoundException">
+            <summary>
+            Exception thrown when a requested resource is not found.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Exceptions.UnauthorizedException">
+            <summary>
+            Exception thrown when authentication fails or authorization is denied.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Exceptions.ValidationException">
+            <summary>
+            Exception thrown when validation fails for a request.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Middleware.ExceptionHandlingMiddleware">
+            <summary>
+            Global exception handling middleware.
+            Catches all application exceptions and returns standardized error responses.
+            </summary>
+        </member>
+        <member name="P:CAS_Login_Back_End.Models.Authentication.SystemTokenDescriptor.CreatedAt">
+            <summary>
+            UTC time at which this system JWT is issued.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Requests.ChangePasswordRequest">
+            <summary>
+            Request model for password change.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Requests.ExchangeTokenRequest">
+            <summary>
+            Request model for token exchange using SSO token.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Requests.ForgotPasswordRequest">
+            <summary>
+            Request model for forgot password flow.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Requests.LoginRequest">
+            <summary>
+            Request model for user login.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Requests.RegisterRequest">
+            <summary>
+            Request model for user registration.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Requests.ResetPasswordRequest">
+            <summary>
+            Request model for password reset.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Requests.UpdateProfileRequest">
+            <summary>
+            Request model for profile update.
+            </summary>
+        </member>
+        <member name="P:CAS_Login_Back_End.Models.Responses.ExchangeTokenResponse.JwtCreatedAt">
+            <summary>
+            UTC time at which the replacement system JWT was issued.
+            </summary>
+        </member>
+        <member name="P:CAS_Login_Back_End.Models.Responses.LoginResponse.JwtCreatedAt">
+            <summary>
+            UTC time at which the system JWT was issued.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Responses.ProfileResponse">
+            <summary>
+            Response model for user profile information.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Responses.RoleResponse">
+            <summary>
+            Response model for role information.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Models.Responses.TokenResponse">
+            <summary>
+            Response model for token information.
+            Does NOT expose the actual token value; tokens are returned at top level.
+            </summary>
+        </member>
+        <member name="P:CAS_Login_Back_End.Models.Responses.ValidateTokenResponse.CreatedAt">
+            <summary>
+            UTC time at which the system JWT was issued. SSO tokens do not contain this claim.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Accounts.AccountService">
+            <summary>
+            Implementation of IAccountService for account management.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Authentication.AccountIdentityService">
+            <summary>
+            Maps the claims in a validated token to an active Login and Account_Info pair.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.BusinessEntities.BusinessEntityService">
+            <summary>
+            Implementation of IBusinessEntityService for business entity management.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Interfaces.IAccountIdentityService">
+            <summary>
+            Resolves the active account represented by a validated token.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Interfaces.IAccountService">
+            <summary>
+            Service for account management operations.
+            Handles registration, profile updates, and password management.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IAccountService.RegisterAsync(CAS_Login_Back_End.Models.Requests.RegisterRequest,System.Threading.CancellationToken)">
+            <summary>
+            Registers a new account with email, password, and profile information.
+            Creates Account, Login, and AccountRole records.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IAccountService.GetProfileAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves current user profile information.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IAccountService.UpdateProfileAsync(System.Int32,CAS_Login_Back_End.Models.Requests.UpdateProfileRequest,System.Threading.CancellationToken)">
+            <summary>
+            Updates user profile information (full names).
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IAccountService.ChangePasswordAsync(System.Int32,CAS_Login_Back_End.Models.Requests.ChangePasswordRequest,System.Threading.CancellationToken)">
+            <summary>
+            Changes password for current user (requires current password verification).
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IAccountService.ForgotPasswordAsync(CAS_Login_Back_End.Models.Requests.ForgotPasswordRequest,System.Threading.CancellationToken)">
+            <summary>
+            Initiates forgot password flow (sends reset token).
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IAccountService.ResetPasswordAsync(CAS_Login_Back_End.Models.Requests.ResetPasswordRequest,System.Threading.CancellationToken)">
+            <summary>
+            Resets password using reset token.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Interfaces.IBusinessEntityService">
+            <summary>
+            Service for business entity management operations.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IBusinessEntityService.GetAllAsync(System.Threading.CancellationToken)">
+            <summary>
+            Retrieves all active business entities accessible to a user.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IBusinessEntityService.GetByNameAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves a specific business entity by name.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IBusinessEntityService.GetAccountBusinessEntitiesAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves all business entities accessible to a specific account.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Interfaces.BusinessEntityResponse">
+            <summary>
+            Response model for business entity information.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Interfaces.IRoleService">
+            <summary>
+            Service for role management operations.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IRoleService.GetAllAsync(System.Threading.CancellationToken)">
+            <summary>
+            Retrieves all active roles.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IRoleService.GetByIdAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves a role by ID.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.IRoleService.GetAccountRoleAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves the role for a specific account in a business entity.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Interfaces.ITokenService">
+            <summary>
+            Generates and validates JWT tokens used by the CAS.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.ITokenService.GenerateSsoToken(System.Int64,System.String)">
+            <summary>
+            Generates the identity SSO token.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.ITokenService.GenerateSystemToken(CAS_Login_Back_End.Models.Authentication.SystemTokenDescriptor)">
+            <summary>
+            Generates a system JWT containing the user's identity and role
+            for a single Business Entity.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.ITokenService.ValidateToken(System.String)">
+            <summary>
+            Validates a JWT.
+            </summary>
+        </member>
+        <member name="M:CAS_Login_Back_End.Services.Interfaces.ITokenService.GetPrincipal(System.String)">
+            <summary>
+            Returns a validated ClaimsPrincipal.
+            Throws if the token is invalid.
+            </summary>
+        </member>
+        <member name="T:CAS_Login_Back_End.Services.Roles.RoleService">
+            <summary>
+            Implementation of IRoleService for role management.
+            </summary>
+        </member>
+        <member name="T:Program">
+            <summary>
+            Auto-generated public partial Program class for top-level statement apps.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Type)">
+            <summary>
+            Generates a documentation comment ID for a type.
+            Example: T:Namespace.Outer+Inner`1 becomes T:Namespace.Outer.Inner`1
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Reflection.PropertyInfo)">
+            <summary>
+            Generates a documentation comment ID for a property.
+            Example: P:Namespace.ContainingType.PropertyName or for an indexer P:Namespace.ContainingType.Item(System.Int32)
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Type,System.String)">
+            <summary>
+            Generates a documentation comment ID for a property given its container type and property name.
+            Example: P:Namespace.ContainingType.PropertyName
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Reflection.MethodInfo)">
+            <summary>
+            Generates a documentation comment ID for a method (or constructor).
+            For example:
+              M:Namespace.ContainingType.MethodName(ParamType1,ParamType2)~ReturnType
+              M:Namespace.ContainingType.#ctor(ParamType)
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.GetTypeDocId(System.Type,System.Boolean,System.Boolean)">
+            <summary>
+            Generates a documentation ID string for a type.
+            This method handles nested types (replacing '+' with '.'),
+            generic types, arrays, pointers, by-ref types, and generic parameters.
+            The <paramref name="includeGenericArguments"/> flag controls whether
+            constructed generic type arguments are emitted, while <paramref name="omitGenericArity"/>
+            controls whether the generic arity marker (e.g. "`1") is appended.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.NormalizeDocId(System.String)">
+            <summary>
+            Normalizes a documentation comment ID to match the compiler-style format.
+            Strips the return type suffix for ordinary methods but retains it for conversion operators.
+            </summary>
+            <param name="docId">The documentation comment ID to normalize.</param>
+            <returns>The normalized documentation comment ID.</returns>
+        </member>
+    </members>
+</doc>

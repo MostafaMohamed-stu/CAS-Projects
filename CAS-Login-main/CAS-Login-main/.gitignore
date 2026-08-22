@@ -1,0 +1,42 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+package-lock.json
+
+# Vite / build
+dist/
+build/
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Server build
+server/bin/
+server/obj/
+
+# Client
+client/node_modules/
+client/dist/
+
+# Logs
+logs/
+*.log
+
+# Ignore nested git directories if converting subrepos
+client/.git/
+server/.git/

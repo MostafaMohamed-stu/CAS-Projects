@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+:root {
+  --brand-red: #C8102E;
+  --brand-red-light: #E8192F;
+  --brand-red-dark: #A00D25;
+  --brand-red-glow: rgba(200, 16, 46, 0.35);
+
+  --bg-base: #080809;
+  --bg-surface: #111115;
+  --bg-card: #16161B;
+  --bg-card-border: rgba(255, 255, 255, 0.06);
+  --bg-input: #1E1E24;
+  --bg-input-focus: #222229;
+
+  --panel-bg-from: #0D0D11;
+  --panel-bg-to: #080809;
+
+  --text-primary: #F2F2F7;
+  --text-secondary: #9999AA;
+  --text-muted: #555566;
+  --text-placeholder: #555566;
+
+  --label-color: rgba(255, 255, 255, 0.45);
+  --label-focused: rgba(255, 255, 255, 0.85);
+  --input-border: rgba(255, 255, 255, 0.07);
+  --input-border-focus: rgba(200, 16, 46, 0.7);
+  --input-border-error: #FF4D6A;
+  --checkbox-border: rgba(255, 255, 255, 0.15);
+
+  --shadow-btn: 0 8px 24px rgba(200, 16, 46, 0.4);
+  --shadow-input-focus: 0 0 0 2px rgba(200, 16, 46, 0.5);
+  --shadow-page: none;
+
+  --radius-card: 20px;
+  --radius-input: 10px;
+  --radius-btn: 10px;
+  --scrollbar-thumb: #333340;
+  --scrollbar-thumb-hover: #444455;
+  --divider: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] {
+  --brand-red-glow: rgba(200, 16, 46, 0.20);
+
+  --bg-base: #F4F5F7;
+  --bg-surface: #FFFFFF;
+  --bg-card: #F9FAFB;
+  --bg-card-border: rgba(0, 0, 0, 0.07);
+  --bg-input: #F1F3F5;
+  --bg-input-focus: #FFFFFF;
+
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  --text-placeholder: #9CA3AF;
+
+  --label-color: #6B7280;
+  --label-focused: #111827;
+  --input-border: rgba(0, 0, 0, 0.12);
+  --input-border-focus: rgba(200, 16, 46, 0.7);
+  --input-border-error: #EF4444;
+  --checkbox-border: rgba(0, 0, 0, 0.2);
+
+  --shadow-btn: 0 8px 24px rgba(200, 16, 46, 0.35);
+  --shadow-input-focus: 0 0 0 3px rgba(200, 16, 46, 0.15);
+  --shadow-page: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  --scrollbar-thumb: #CBD5E1;
+  --scrollbar-thumb-hover: #94A3B8;
+  --divider: rgba(200, 16, 46, 0.35);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+input::placeholder {
+  color: var(--text-placeholder);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+::selection {
+  background: var(--brand-red-glow);
+  color: var(--brand-red);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-red);
+  outline-offset: 2px;
+}
