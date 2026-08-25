@@ -1,8 +1,8 @@
+﻿import { logoutFromAdmission } from "../utils/casAuth";
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { logoutFromAdmission } from "../utils/casAuth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
@@ -114,33 +114,33 @@ const AdminDashboardPage = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [userInfo, setUserInfo] = useState({ fullName: "", role: "" });
   const governorates = [
-    "القاهرة",
-    "الإسكندرية",
-    "الجيزة",
-    "الشرقية",
-    "الغربية",
-    "المنوفية",
-    "القليوبية",
-    "البحيرة",
-    "كفر الشيخ",
-    "دمياط",
-    "الدقهلية",
-    "المنيا",
-    "أسيوط",
-    "سوهاج",
-    "قنا",
-    "الأقصر",
-    "أسوان",
-    "بني سويف",
-    "الفيوم",
-    "الوادي الجديد",
-    "مطروح",
-    "شمال سيناء",
-    "جنوب سيناء",
-    "البحر الأحمر",
-    "بورسعيد",
-    "الإسماعيلية",
-    "السويس",
+    "Ø§Ù„Ù‚Ø§Ù‡Ø±Ø©",
+    "Ø§Ù„Ø¥Ø³ÙƒÙ†Ø¯Ø±ÙŠØ©",
+    "Ø§Ù„Ø¬ÙŠØ²Ø©",
+    "Ø§Ù„Ø´Ø±Ù‚ÙŠØ©",
+    "Ø§Ù„ØºØ±Ø¨ÙŠØ©",
+    "Ø§Ù„Ù…Ù†ÙˆÙÙŠØ©",
+    "Ø§Ù„Ù‚Ù„ÙŠÙˆØ¨ÙŠØ©",
+    "Ø§Ù„Ø¨Ø­ÙŠØ±Ø©",
+    "ÙƒÙØ± Ø§Ù„Ø´ÙŠØ®",
+    "Ø¯Ù…ÙŠØ§Ø·",
+    "Ø§Ù„Ø¯Ù‚Ù‡Ù„ÙŠØ©",
+    "Ø§Ù„Ù…Ù†ÙŠØ§",
+    "Ø£Ø³ÙŠÙˆØ·",
+    "Ø³ÙˆÙ‡Ø§Ø¬",
+    "Ù‚Ù†Ø§",
+    "Ø§Ù„Ø£Ù‚ØµØ±",
+    "Ø£Ø³ÙˆØ§Ù†",
+    "Ø¨Ù†ÙŠ Ø³ÙˆÙŠÙ",
+    "Ø§Ù„ÙÙŠÙˆÙ…",
+    "Ø§Ù„ÙˆØ§Ø¯ÙŠ Ø§Ù„Ø¬Ø¯ÙŠØ¯",
+    "Ù…Ø·Ø±ÙˆØ­",
+    "Ø´Ù…Ø§Ù„ Ø³ÙŠÙ†Ø§Ø¡",
+    "Ø¬Ù†ÙˆØ¨ Ø³ÙŠÙ†Ø§Ø¡",
+    "Ø§Ù„Ø¨Ø­Ø± Ø§Ù„Ø£Ø­Ù…Ø±",
+    "Ø¨ÙˆØ±Ø³Ø¹ÙŠØ¯",
+    "Ø§Ù„Ø¥Ø³Ù…Ø§Ø¹ÙŠÙ„ÙŠØ©",
+    "Ø§Ù„Ø³ÙˆÙŠØ³",
   ];
   const scoreTotalPreview =
     (Number(scoreInputs.presentation) || 0) +
@@ -625,6 +625,7 @@ const AdminDashboardPage = () => {
               getExamTotal={getExamTotal}
               getExamMaximum={getExamMaximum}
               onGiveScore={handleOpenScoreModal}
+              canEditStatus={userInfo.role?.toLowerCase() === "superadmin"}
             />
           </div>
 
@@ -657,7 +658,7 @@ const AdminDashboardPage = () => {
                   {scoreModalStudent.fullName}
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  National ID ·{" "}
+                  National ID Â·{" "}
                   <span className="font-semibold text-gray-700">
                     {scoreModalStudent.nationalId}
                   </span>
@@ -1352,3 +1353,4 @@ const AdminDashboardPage = () => {
 };
 
 export default AdminDashboardPage;
+

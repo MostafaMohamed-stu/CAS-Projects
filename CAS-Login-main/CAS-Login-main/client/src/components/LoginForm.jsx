@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext'
 import { EyeIcon, EyeOffIcon, SpinnerIcon, CheckIcon, AlertIcon } from './Icons'
 import logoImg from '../assets/elsewedy-logo.png'
 import SuccessOverlay from './SuccessOverlay'
-import { authApi } from '../services/api'
+import { authApi, tokenStorage } from '../services/api'
 
 const LS_REMEMBER_KEY = 'cas_remembered_user'
 
@@ -400,97 +400,25 @@ export default function LoginForm() {
   const [toast, setToast] = useState(null)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  // Extract and persist SSO parameters, then clean the address bar URL
+  // Read the requested business entity, then clean the address bar URL.
   const [ssoConfig] = useState(() => {
     const searchParams = new URLSearchParams(window.location.search)
-    let redirect = searchParams.get('redirect') || searchParams.get('service')
-    let entity = searchParams.get('businessEntity') || searchParams.get('system') || searchParams.get('entity')
-    // businessEntityId=2 is sent by the Attendance app; store as a number
-    const entityIdParam = searchParams.get('businessEntityId')
-    let entityId = entityIdParam ? parseInt(entityIdParam, 10) : null
+    const rawEntityId = searchParams.get('businessEntityId') || searchParams.get('entityId') || searchParams.get('entity') || ''
+    const parsedEntityId = Number(rawEntityId)
+    let entityId = Number.isFinite(parsedEntityId) && parsedEntityId > 0 ? parsedEntityId : null
+    let entityName = searchParams.get('businessEntity') || searchParams.get('system') || ''
     let prompt = searchParams.get('prompt') === 'login' || searchParams.get('logout') === 'true'
-
-    if (redirect) {
-      sessionStorage.setItem('cas_redirect_url', redirect)
-      sessionStorage.setItem('cas_requested_entity', entity || 'Exams')
-      if (entityId) sessionStorage.setItem('cas_business_entity_id', String(entityId))
-      sessionStorage.setItem('cas_is_prompt_login', prompt ? 'true' : 'false')
-      // If prompt=login, immediately wipe the SSO session so the effect
-      // cannot auto-redirect even before it checks isPromptLogin
-      if (prompt) {
-        localStorage.removeItem('cas_sso_token')
-        localStorage.removeItem('cas_jwt_token')
-        localStorage.removeItem('cas_user_info')
-      }
-      // Clean up address bar URL immediately
-      window.history.replaceState(null, '', window.location.pathname)
-    } else {
-      redirect = sessionStorage.getItem('cas_redirect_url') || ''
-      entity = sessionStorage.getItem('cas_requested_entity') || 'Exams'
-      const storedId = sessionStorage.getItem('cas_business_entity_id')
-      entityId = storedId ? parseInt(storedId, 10) : null
-      prompt = sessionStorage.getItem('cas_is_prompt_login') === 'true'
-    }
+    let redirectParam = searchParams.get('redirect') || searchParams.get('redirectUrl') || ''
 
     return {
-      redirectUrl: redirect,
-      requestedEntity: entity || 'Exams',
-      // Use the numeric ID when available (sent by Attendance), fallback to null
-      businessEntityId: entityId,
+      requestedEntityId: entityId,
+      requestedEntityName: entityName,
       isPromptLogin: prompt,
+      redirectParam: redirectParam,
     }
   })
 
-  const { redirectUrl, requestedEntity, businessEntityId, isPromptLogin } = ssoConfig
-
-  useEffect(() => {
-    async function checkExistingSession() {
-      if (!redirectUrl) return
-
-      if (isPromptLogin) {
-        localStorage.removeItem('cas_sso_token')
-        localStorage.removeItem('cas_jwt_token')
-        localStorage.removeItem('cas_user_info')
-        sessionStorage.removeItem('cas_is_prompt_login')
-        return
-      }
-
-      const ssoToken = localStorage.getItem('cas_sso_token')
-      const userRaw = localStorage.getItem('cas_user_info')
-      if (ssoToken && userRaw) {
-        try {
-          let jwtToken = ssoToken
-          let emailStr = ''
-          let nameStr = ''
-          let role = 'Student'
-          try {
-            const user = JSON.parse(userRaw)
-            emailStr = user.email || user.Email || ''
-            nameStr = user.fullNameEn || user.FullNameEn || user.fullNameAr || user.FullNameAr || ''
-            role = user.role || user.Role || 'Student'
-          } catch {}
-
-          try {
-            const exchangeRes = await authApi.exchangeToken(requestedEntity, businessEntityId)
-            if (exchangeRes?.data?.jwtToken || exchangeRes?.data?.JwtToken) jwtToken = exchangeRes.data.jwtToken || exchangeRes.data.JwtToken
-            if (exchangeRes?.data?.role || exchangeRes?.data?.Role) role = exchangeRes.data.role || exchangeRes.data.Role
-          } catch (ex) {
-            console.warn('Exchange token fallback:', ex)
-          }
-
-          const target = new URL(redirectUrl)
-          target.searchParams.set('token', jwtToken)
-          target.searchParams.set('role', role)
-          if (nameStr) target.searchParams.set('name', nameStr)
-          if (emailStr) target.searchParams.set('email', emailStr)
-          window.location.href = target.toString()
-        } catch (err) {
-          console.error('SSO Auto-redirect error:', err)
-        }
-      }
-    }
-    checkExistingSession()
-  }, [redirectUrl, requestedEntity, isPromptLogin])
+  const { requestedEntityId, requestedEntityName, isPromptLogin, redirectParam } = ssoConfig
 
   useEffect(() => {
     const saved = localStorage.getItem(LS_REMEMBER_KEY)
@@ -499,6 +427,58 @@ export default function LoginForm() {
       setRememberMe(true)
     }
   }, [])
+
+  useEffect(() => {
+    const ssoToken = tokenStorage.getSsoToken()
+    const savedUser = tokenStorage.getUser()
+
+    if (ssoToken && !isPromptLogin && (requestedEntityId || requestedEntityName || redirectParam)) {
+      setSubmitting(true)
+      setToast({ type: 'info', message: 'Exchanging SSO session...' })
+
+      authApi.exchangeToken(requestedEntityId, requestedEntityName)
+        .then((result) => {
+          const data = result?.data || result
+          let redirectUrl = redirectParam || data?.redirectUrl || data?.RedirectUrl
+
+          if (redirectUrl.includes("admission.sewedy.com.eg")) {
+            redirectUrl = "http://localhost:5175/sso-callback?destination=/admin/dashboard"
+          } else if (redirectUrl.includes("capstone.sewedy.com.eg")) {
+            redirectUrl = "http://localhost:3001"
+          } else if (redirectUrl.includes("attendance.sewedy.com.eg")) {
+            redirectUrl = "http://localhost:3000"
+          } else if (redirectUrl.includes("exam.sewedy.com.eg")) {
+            redirectUrl = "http://localhost:5177"
+          }
+
+          const jwtToken = data?.jwtToken || data?.JwtToken || data?.ssoToken || data?.SsoToken || ssoToken
+          const role = data?.role || data?.Role || savedUser?.role || ""
+          const fullName = data?.fullNameEn || data?.FullNameEn || savedUser?.fullNameEn || ""
+          const userEmail = data?.email || data?.Email || savedUser?.email || ""
+
+          try {
+            const urlObj = new URL(redirectUrl, window.location.origin)
+            if (jwtToken && !urlObj.searchParams.has('token')) urlObj.searchParams.set('token', jwtToken)
+            if (role && !urlObj.searchParams.has('role')) urlObj.searchParams.set('role', role)
+            if (fullName && !urlObj.searchParams.has('name')) urlObj.searchParams.set('name', fullName)
+            if (userEmail && !urlObj.searchParams.has('email')) urlObj.searchParams.set('email', userEmail)
+            redirectUrl = urlObj.toString()
+          } catch (e) {
+            console.error("Error formatting target redirect URL:", e)
+          }
+
+          setIsSuccess(true)
+          setTimeout(() => {
+            window.location.href = redirectUrl
+          }, 800)
+        })
+        .catch((err) => {
+          console.warn("SSO exchange failed, requiring manual sign-in:", err)
+          setSubmitting(false)
+          setToast({ type: 'error', message: err.message || 'SSO session invalid or role not assigned for this system.' })
+        })
+    }
+  }, [isPromptLogin, requestedEntityId, requestedEntityName, redirectParam])
 
   useEffect(() => {
     const nextErrors = {}
@@ -532,6 +512,12 @@ export default function LoginForm() {
       return
     }
 
+    if (!requestedEntityId) {
+      setToast({ type: 'error', message: 'Business entity ID is missing. Please open this page from a valid entity link.' })
+      setTimeout(() => setToast(null), 5000)
+      return
+    }
+
     setSubmitting(true)
     setToast(null)
 
@@ -542,53 +528,52 @@ export default function LoginForm() {
     }
 
     try {
-      const result = await authApi.login(email, password, requestedEntity, businessEntityId)
-      setSubmitting(false)
-      setIsSuccess(true)
-
+      const result = await authApi.login(email, password, requestedEntityId, requestedEntityName)
       const data = result?.data || result
-      const jwtToken = data?.jwtToken || data?.JwtToken || data?.ssoToken || data?.SsoToken || 'demo_sso_token'
-      const role = data?.role || data?.Role || 'Student'
-      const fullName = data?.fullNameEn || data?.FullNameEn || data?.fullNameAr || data?.FullNameAr || email
-
-      if (redirectUrl) {
-        sessionStorage.removeItem('cas_redirect_url')
-        sessionStorage.removeItem('cas_requested_entity')
-        sessionStorage.removeItem('cas_business_entity_id')
-        sessionStorage.removeItem('cas_is_prompt_login')
-        setTimeout(() => {
-          try {
-            const target = new URL(redirectUrl)
-            target.searchParams.set('token', jwtToken)
-            target.searchParams.set('role', role)
-            target.searchParams.set('name', fullName)
-            target.searchParams.set('email', email)
-            window.location.href = target.toString()
-          } catch (e) {
-            window.location.href = `${redirectUrl}?token=${jwtToken}&role=${role}&name=${encodeURIComponent(fullName)}&email=${encodeURIComponent(email)}`
-          }
-        }, 1500)
-      }
-    } catch (err) {
+      let redirectUrl = redirectParam || data?.redirectUrl || data?.RedirectUrl
       setSubmitting(false)
-      if ((email === 'admin@elsewedy.com' || email.includes('@')) && (err.status === 404 || err.message?.includes('Failed to fetch'))) {
-        setIsSuccess(true)
-        if (redirectUrl) {
-          setTimeout(() => {
-            try {
-              const target = new URL(redirectUrl)
-              target.searchParams.set('token', 'demo_jwt_token')
-              target.searchParams.set('role', 'Student')
-              target.searchParams.set('name', email)
-              target.searchParams.set('email', email)
-              window.location.href = target.toString()
-            } catch (e) {
-              window.location.href = `${redirectUrl}?token=demo_jwt_token&role=Student&email=${encodeURIComponent(email)}`
-            }
-          }, 1500)
-        }
+
+      if (!redirectUrl) {
+        setToast({ type: 'error', message: 'Login succeeded, but this business entity has no redirect URL configured.' })
+        setTimeout(() => setToast(null), 5000)
         return
       }
+
+      // Local testing override: map production domains to local ports
+      if (redirectUrl.includes("admission.sewedy.com.eg")) {
+        redirectUrl = "http://localhost:5175/sso-callback?destination=/admin/dashboard"
+      } else if (redirectUrl.includes("capstone.sewedy.com.eg")) {
+        redirectUrl = "http://localhost:3001"
+      } else if (redirectUrl.includes("attendance.sewedy.com.eg")) {
+        redirectUrl = "http://localhost:3000"
+      } else if (redirectUrl.includes("exam.sewedy.com.eg")) {
+        redirectUrl = "http://localhost:5177"
+      }
+
+      // Attach JWT token, role, name, email to query string for local SSO handoff
+      const jwtToken = data?.jwtToken || data?.ssoToken
+      const role = data?.role || ""
+      const fullName = data?.fullNameEn || ""
+      const userEmail = data?.email || email
+
+      try {
+        const urlObj = new URL(redirectUrl, window.location.origin)
+        if (jwtToken && !urlObj.searchParams.has('token')) urlObj.searchParams.set('token', jwtToken)
+        if (role && !urlObj.searchParams.has('role')) urlObj.searchParams.set('role', role)
+        if (fullName && !urlObj.searchParams.has('name')) urlObj.searchParams.set('name', fullName)
+        if (userEmail && !urlObj.searchParams.has('email')) urlObj.searchParams.set('email', userEmail)
+        redirectUrl = urlObj.toString()
+      } catch (e) {
+        console.error("Error formatting target redirect URL:", e)
+      }
+
+      setIsSuccess(true)
+      sessionStorage.removeItem('cas_is_prompt_login')
+      setTimeout(() => {
+        window.location.href = redirectUrl
+      }, 1500)
+    } catch (err) {
+      setSubmitting(false)
       const errorMessage = err.message || 'Invalid credentials. Please try again.'
       setToast({ type: 'error', message: errorMessage })
       setTimeout(() => setToast(null), 5000)

@@ -64,8 +64,7 @@ public class AdmissionSettingsController : ControllerBase
     private async Task<Models.Account?> GetAuthorizedSuperAdminAsync()
     {
         var email = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? User.FindFirst("sub")?.Value
-            ?? User.FindFirst("Email")?.Value;
+            ?? User.FindFirst("sub")?.Value;
 
         if (string.IsNullOrWhiteSpace(email) || !await _authRepo.IsSuperAdminAsync(email))
             return null;

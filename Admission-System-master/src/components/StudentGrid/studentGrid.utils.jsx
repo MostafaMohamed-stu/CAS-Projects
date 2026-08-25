@@ -171,8 +171,8 @@ export function PrepFinalCell({ value }) {
   );
 }
 
-/** Interviewer score cell: score / 40 with percentage badge */
-export function InterviewerScoreCell({ value }) {
+/** Interviewer score cell: score / 40 with percentage badge and interviewer name */
+export function InterviewerScoreCell({ value, name }) {
   if (value == null || isNaN(Number(value))) {
     return <span style={{ color: 'var(--sg-muted)' }}>—</span>;
   }
@@ -180,21 +180,28 @@ export function InterviewerScoreCell({ value }) {
   const pct = Math.round((val / 40) * 100);
   const color = pct >= 70 ? '#10b981' : pct >= 45 ? '#f59e0b' : '#ef4444';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: '100%' }}>
-      <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--sg-text)' }}>
-        {val} <span style={{ color: 'var(--sg-muted)', fontWeight: 400, fontSize: 11 }}>/ 40</span>
-      </span>
-      <span style={{
-        fontSize: 10,
-        fontWeight: 700,
-        color,
-        background: `${color}14`,
-        padding: '1px 5px',
-        borderRadius: 4,
-        border: `1px solid ${color}30`,
-      }}>
-        {pct}%
-      </span>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', gap: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--sg-text)' }}>
+          {val} <span style={{ color: 'var(--sg-muted)', fontWeight: 400, fontSize: 11 }}>/ 40</span>
+        </span>
+        <span style={{
+          fontSize: 10,
+          fontWeight: 700,
+          color,
+          background: `${color}14`,
+          padding: '1px 5px',
+          borderRadius: 4,
+          border: `1px solid ${color}30`,
+        }}>
+          {pct}%
+        </span>
+      </div>
+      {name && (
+        <span style={{ fontSize: 9, color: 'var(--sg-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130 }}>
+          {name}
+        </span>
+      )}
     </div>
   );
 }
@@ -257,12 +264,16 @@ export function normalizeStatus(raw) {
 }
 
 /** Inline status dropdown — updates in-place, no full grid reload */
-export function StatusDropdownCell({ data, node, context }) {
+export function StatusDropdownCell({ data, node, context, editable = false }) {
   const [saving, setSaving] = useState(false);
 
   // Read status directly from row data
   const statusNum = normalizeStatus(data?.status ?? data?.Status);
   const cfg = STATUS_LOOKUP[statusNum] || STATUS_LOOKUP[1];
+
+  if (!editable) {
+    return <span style={{ color: cfg.color, fontWeight: 700, fontSize: 11 }}>{cfg.label}</span>;
+  }
 
   const handleChange = async (e) => {
     e.stopPropagation();
@@ -393,21 +404,41 @@ export function ContactsCell({ data }) {
 }
 
 /**
+ * Find the score record belonging to a fixed interviewer slot.
+ * The roster is required because a missing score must not shift later scores left.
+ */
+function getInterviewerItem(s, idx) {
+  const arr = s?.interviewScores ?? s?.InterviewScores;
+  if (!Array.isArray(arr)) return null;
+
+  const roster = s?.interviewerIds ?? s?.InterviewerIds;
+  if (Array.isArray(roster)) {
+    if (roster[idx] == null) return null;
+
+    const interviewerId = Number(roster[idx]);
+    return arr.find((item) => {
+      if (!item || typeof item !== 'object') return false;
+      const itemId = item.interviewerId ?? item.InterviewerId;
+      return itemId != null && Number(itemId) === interviewerId;
+    }) ?? null;
+  }
+
+  return arr[idx] ?? null;
+}
+
+/**
  * Safely extract score for a given interviewer index (0, 1, 2).
  * @param {import('./studentGrid.types.js').StudentRow} s
- * @param {number} idx - 0 for Interviewer 1, 1 for Interviewer 2, 2 for Interviewer 3
+ * @param {number} idx - 0 for slot 1, 1 for slot 2, 2 for slot 3
  */
 export function getInterviewerScore(s, idx) {
   if (!s) return null;
 
-  // 1. Array of interviewScores
-  if (Array.isArray(s.interviewScores) && s.interviewScores.length > idx) {
-    const item = s.interviewScores[idx];
-    if (typeof item === 'number') return item;
-    if (item && typeof item === 'object') {
-      const val = item.score ?? item.totalScore ?? item.value ?? item.interviewScore;
-      if (val != null && !isNaN(Number(val))) return Number(val);
-    }
+  const item = getInterviewerItem(s, idx);
+  if (typeof item === 'number') return item;
+  if (item && typeof item === 'object') {
+    const val = item.score ?? item.Score ?? item.totalScore ?? item.value ?? item.interviewScore;
+    if (val != null && !isNaN(Number(val))) return Number(val);
   }
 
   // 2. Direct properties on student object
@@ -423,12 +454,20 @@ export function getInterviewerScore(s, idx) {
     }
   }
 
-  // 3. Fallback: if student has single interviewScore, show it for Interviewer 1
-  if (idx === 0) {
-    const single = s.interviewScore ?? s.InterviewScore;
-    if (single != null && !isNaN(Number(single))) return Number(single);
-  }
+  return null;
+}
 
+/**
+ * Get interviewer display name for a given index slot.
+ * @param {import('./studentGrid.types.js').StudentRow} s
+ * @param {number} idx
+ */
+export function getInterviewerName(s, idx) {
+  if (!s) return null;
+  const item = getInterviewerItem(s, idx);
+  if (item && typeof item === 'object') {
+    return item.admin ?? item.Admin ?? item.email ?? item.Email ?? null;
+  }
   return null;
 }
 
@@ -438,10 +477,10 @@ export function getInterviewerScore(s, idx) {
  * Build AG Grid column definitions.
  * Wrapped in useMemo in the parent to avoid re-creation on every render.
  *
- * @param {{ getExamTotal?: Function; getExamMaximum?: Function; showInterviewScoreAction?: boolean }} opts
+ * @param {{ getExamTotal?: Function; getExamMaximum?: Function; showInterviewScoreAction?: boolean; canEditStatus?: boolean }} opts
  * @returns {import('ag-grid-community').ColDef[]}
  */
-export function buildColumnDefs({ getExamTotal, getExamMaximum, showInterviewScoreAction = false } = {}) {
+export function buildColumnDefs({ getExamTotal, getExamMaximum, showInterviewScoreAction = false, canEditStatus = false } = {}) {
   return [
     // Checkbox selection column next to National ID — pinned left
     {
@@ -476,6 +515,17 @@ export function buildColumnDefs({ getExamTotal, getExamMaximum, showInterviewSco
       minWidth:     200,
       filter:       'agTextColumnFilter',
       cellRenderer: NameCell,
+    },
+
+    {
+      colId:        'createdAt',
+      field:        'createdAt',
+      headerName:   'Created At',
+      width:        125,
+      sortable:     true,
+      filter:       'agTextColumnFilter',
+      valueGetter:  (p) => p.data?.createdAt ?? p.data?.CreatedAt ?? null,
+      valueFormatter: (p) => p.value ? String(p.value).slice(0, 10) : '—',
     },
 
     {
@@ -549,40 +599,55 @@ export function buildColumnDefs({ getExamTotal, getExamMaximum, showInterviewSco
     {
       colId:         'interviewer1',
       headerName:    'Interviewer 1',
-      width:         140,
+      width:         155,
       sortable:      true,
       filter:        'agNumberColumnFilter',
       valueGetter:   (p) => getInterviewerScore(p.data, 0),
-      valueFormatter: (p) => p.value != null ? `${p.value}/40 (${Math.round((p.value / 40) * 100)}%)` : '—',
-      cellRenderer:  (p) => <InterviewerScoreCell value={p.value} />,
+      valueFormatter: (p) => {
+        if (p.value == null) return '—';
+        const name = getInterviewerName(p.data, 0);
+        return `${p.value}/40${name ? ` · ${name}` : ''}`;
+      },
+      headerTooltip: 'Mapped by interviewer account',
+      cellRenderer:  (p) => <InterviewerScoreCell value={p.value} name={getInterviewerName(p.data, 0)} />,
     },
 
     {
       colId:         'interviewer2',
       headerName:    'Interviewer 2',
-      width:         140,
+      width:         155,
       sortable:      true,
       filter:        'agNumberColumnFilter',
       valueGetter:   (p) => getInterviewerScore(p.data, 1),
-      valueFormatter: (p) => p.value != null ? `${p.value}/40 (${Math.round((p.value / 40) * 100)}%)` : '—',
-      cellRenderer:  (p) => <InterviewerScoreCell value={p.value} />,
+      valueFormatter: (p) => {
+        if (p.value == null) return '—';
+        const name = getInterviewerName(p.data, 1);
+        return `${p.value}/40${name ? ` · ${name}` : ''}`;
+      },
+      headerTooltip: 'Mapped by interviewer account',
+      cellRenderer:  (p) => <InterviewerScoreCell value={p.value} name={getInterviewerName(p.data, 1)} />,
     },
 
     {
       colId:         'interviewer3',
       headerName:    'Interviewer 3',
-      width:         140,
+      width:         155,
       sortable:      true,
       filter:        'agNumberColumnFilter',
       valueGetter:   (p) => getInterviewerScore(p.data, 2),
-      valueFormatter: (p) => p.value != null ? `${p.value}/40 (${Math.round((p.value / 40) * 100)}%)` : '—',
-      cellRenderer:  (p) => <InterviewerScoreCell value={p.value} />,
+      valueFormatter: (p) => {
+        if (p.value == null) return '—';
+        const name = getInterviewerName(p.data, 2);
+        return `${p.value}/40${name ? ` · ${name}` : ''}`;
+      },
+      headerTooltip: 'Mapped by interviewer account',
+      cellRenderer:  (p) => <InterviewerScoreCell value={p.value} name={getInterviewerName(p.data, 2)} />,
     },
 
     {
       colId:         'totalPct',
       field:         'totalPercentage',
-      headerName:    'Total %',
+      headerName:    'Average %',
       width:         110,
       sortable:      true,
       filter:        'agNumberColumnFilter',
@@ -630,7 +695,7 @@ export function buildColumnDefs({ getExamTotal, getExamMaximum, showInterviewSco
       filter:       'agNumberColumnFilter',
       sortable:     true,
       suppressMovable: false,
-      cellRenderer: (p) => <StatusDropdownCell data={p.data} node={p.node} api={p.api} context={p.context} />,
+      cellRenderer: (p) => <StatusDropdownCell data={p.data} node={p.node} api={p.api} context={p.context} editable={canEditStatus} />,
     },
 
     {

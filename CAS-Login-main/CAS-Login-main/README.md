@@ -18,6 +18,46 @@ The CAS SSO ecosystem consists of:
 
 ---
 
+## 🚀 Local Login Flow
+
+Start the backend on `http://localhost:5148` and the frontend on `http://localhost:5174`.
+Open CAS with only the numeric business entity ID:
+
+```text
+http://localhost:5174/?businessEntityId=3
+```
+
+The user enters an email and password. CAS sends them to the backend as:
+
+```http
+POST http://localhost:5148/api/Auth/login/3
+Content-Type: application/json
+```
+
+```json
+{
+  "email": "user@example.com",
+  "password": "P@ssw0rd!"
+}
+```
+
+The backend verifies the credentials and entity access, then reads the destination from
+`Tbl_BusinessEntity.URL`. CAS redirects directly to the returned `redirectUrl` without
+adding `token`, `role`, `name`, or `email` to the destination URL.
+
+Verify the destination with:
+
+```sql
+SELECT ID, BusinessEntity, URL
+FROM Tbl_BusinessEntity
+WHERE ID = 3;
+```
+
+The Vite development proxy forwards `/api` to `http://localhost:5148`. Set
+`VITE_API_BASE_URL` when the frontend uses a separately hosted API.
+
+---
+
 ## 🔑 Shared JWT Configuration & Secrets
 
 All sub-systems must validate JWT tokens using the CAS master signing key and claims configuration:
@@ -111,10 +151,9 @@ Do NOT create or render local email/password login forms in sub-systems. Make yo
 ```javascript
 // Automatically redirect to Central CAS Login page
 const casUrl = 'http://localhost:5174';
-const callbackUrl = encodeURIComponent(`${window.location.origin}/sso-callback`);
-const businessEntity = 'YOUR_BUSINESS_ENTITY_NAME'; // e.g. 'Exams', 'CapstoneProject'
+const businessEntityId = 3;
 
-window.location.href = `${casUrl}/login?redirect=${callbackUrl}&businessEntity=${businessEntity}`;
+window.location.href = `${casUrl}/?businessEntityId=${businessEntityId}`;
 ```
 
 ### 2. Implement SSO Callback Handler (`/sso-callback`)

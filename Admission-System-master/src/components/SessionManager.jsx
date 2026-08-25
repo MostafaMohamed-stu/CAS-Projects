@@ -9,15 +9,25 @@ const SessionManager = () => {
 
   useEffect(() => {
     const checkSessionAndRedirect = () => {
+      const currentPath = location.pathname;
+
+      if (
+        currentPath === "/sso-callback" ||
+        currentPath === "/admin/login" ||
+        currentPath === "/reception-coordinator/login"
+      ) {
+        return;
+      }
+
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
         // No token found, redirect to login if on admin pages
         if (
-          location.pathname.includes("/admin") ||
-          location.pathname.includes("/super-admin") ||
-          location.pathname.includes("/board-admin") ||
-          location.pathname.includes("/student-affair")
+          currentPath.includes("/admin") ||
+          currentPath.includes("/super-admin") ||
+          currentPath.includes("/board-admin") ||
+          currentPath.includes("/student-affair")
         ) {
           navigate("/admin/login");
         }
@@ -27,12 +37,15 @@ const SessionManager = () => {
       try {
         // Decode JWT token to get role
         const payload = JSON.parse(atob(token.split(".")[1]));
-        const role = payload.role || payload.Role;
+        const role =
+          payload.Role ||
+          payload.role ||
+          payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+          "";
 
-        // Check if user is on the correct dashboard for their role
-        const currentPath = location.pathname;
+        const normRole = role.toLowerCase();
 
-        if (role === "SuperAdmin") {
+        if (normRole === "superadmin") {
           const allowedSuperAdminPaths = [
             "/super-admin/dashboard",
             "/admin/excel-upload",
@@ -41,15 +54,15 @@ const SessionManager = () => {
           if (!allowedSuperAdminPaths.includes(currentPath)) {
             navigate("/super-admin/dashboard");
           }
-        } else if (role === "Board") {
+        } else if (normRole === "board") {
           if (currentPath !== "/board-admin/dashboard") {
             navigate("/board-admin/dashboard");
           }
-        } else if (role === "Interviewer") {
+        } else if (normRole === "interviewer") {
           if (currentPath !== "/admin/dashboard") {
             navigate("/admin/dashboard");
           }
-        } else if (role === "StudentAffair") {
+        } else if (normRole === "studentaffair") {
           if (!currentPath.startsWith("/student-affair")) {
             navigate("/student-affair/search");
           }

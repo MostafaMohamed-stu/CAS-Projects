@@ -9,6 +9,7 @@ public interface IBusinessEntityAuthorizationService
 {
     Task<BusinessEntityAssignment> GetAuthorizedAsync(
         long accountId,
-        long businessEntityId,
+        long? businessEntityId,
+        string? businessEntityName = null,
         CancellationToken cancellationToken = default);
 }

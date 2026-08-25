@@ -18,8 +18,10 @@ export const tokenStorage = {
     }
   },
   saveSession: (data) => {
-    if (data?.ssoToken || data?.SsoToken) localStorage.setItem(TOKEN_KEYS.SSO, data.ssoToken || data.SsoToken)
-    if (data?.jwtToken || data?.JwtToken) localStorage.setItem(TOKEN_KEYS.JWT, data.jwtToken || data.JwtToken)
+    const sso = data?.ssoToken || data?.SsoToken
+    const jwt = data?.jwtToken || data?.JwtToken
+    if (sso) localStorage.setItem(TOKEN_KEYS.SSO, sso)
+    if (jwt) localStorage.setItem(TOKEN_KEYS.JWT, jwt)
 
     const userInfo = {
       accountId: data?.accountId || data?.AccountId,
@@ -75,15 +77,21 @@ async function request(endpoint, options = {}) {
 }
 
 export const authApi = {
-  login: async (email, password, businessEntityName = 'Default', businessEntityId = null) => {
-    // If a numeric businessEntityId was provided (e.g., from the Attendance app), use it.
-    // Otherwise fall back to sending the name for backwards compatibility.
-    const payload = businessEntityId
-      ? { email, password, businessEntityId }
-      : { email, password, businessEntityName }
-    const result = await request('/Auth/login', {
+  login: async (email, password, businessEntityId, businessEntityName) => {
+    const payload = { email, password }
+    const headers = {}
+    if (businessEntityName) {
+      headers['BusinessEntityName'] = businessEntityName
+    }
+    if (businessEntityId) {
+      headers['BusinessEntityId'] = String(businessEntityId)
+    }
+
+    const endpoint = businessEntityId ? `/Auth/login/${businessEntityId}` : '/Auth/login'
+    const result = await request(endpoint, {
       method: 'POST',
       body: JSON.stringify(payload),
+      headers,
     })
 
     if (result?.data) {
@@ -93,16 +101,20 @@ export const authApi = {
     return result
   },
 
-  exchangeToken: async (businessEntityName, businessEntityId = null) => {
+  exchangeToken: async (businessEntityId, businessEntityName) => {
     const ssoToken = tokenStorage.getSsoToken()
-    // The switch endpoint requires a numeric BusinessEntityId
-    const payload = businessEntityId
-      ? { businessEntityId }
-      : { businessEntityName }
+    const headers = ssoToken ? { 'Authorization': `Bearer ${ssoToken}` } : {}
+    if (businessEntityName) {
+      headers['BusinessEntityName'] = businessEntityName
+    }
+    if (businessEntityId) {
+      headers['BusinessEntityId'] = String(businessEntityId)
+    }
+
     const result = await request('/Auth/switch', {
       method: 'POST',
-      body: JSON.stringify(payload),
-      headers: ssoToken ? { 'Authorization': `Bearer ${ssoToken}` } : {},
+      body: JSON.stringify({ businessEntityId, businessEntityName }),
+      headers,
     })
     if (result?.data?.jwtToken) {
       localStorage.setItem(TOKEN_KEYS.JWT, result.data.jwtToken)

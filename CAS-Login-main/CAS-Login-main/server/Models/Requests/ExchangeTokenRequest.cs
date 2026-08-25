@@ -5,5 +5,6 @@ namespace CAS_Login_Back_End.Models.Requests;
 /// </summary>
 public class ExchangeTokenRequest
 {
-    public long BusinessEntityId { get; set; }
+    public long? BusinessEntityId { get; set; }
+    public string? BusinessEntityName { get; set; }
 }

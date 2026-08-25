@@ -13,8 +13,8 @@ import {
 } from "../components/ui/Card";
 import { Alert, AlertDescription } from "../components/ui/Alert";
 import Header from "../components/layout/Header";
-import { logoutFromAdmission } from "../utils/casAuth";
 import { studentAffairAPI } from "../utils/api";
+import { logoutFromAdmission } from "../utils/casAuth";
 
 const StudentAffairSearchPage = () => {
   const [searchMode, setSearchMode] = useState("nationalId"); // "nationalId" | "name"

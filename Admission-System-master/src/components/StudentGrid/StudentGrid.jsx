@@ -82,6 +82,7 @@ function useDebounce(value, ms) {
  *   getExamTotal?: (s: any) => number;
  *   getExamMaximum?: (s: any) => number;
  *   handleViewStudentDetails?: (s: any) => void;
+ *   canEditStatus?: boolean;
  * }} props
  */
 export default function StudentGrid({
@@ -93,6 +94,7 @@ export default function StudentGrid({
   getExamMaximum,
   handleViewStudentDetails,
   onGiveScore,
+  canEditStatus = false,
 }) {
   // ── Theme ─────────────────────────────────────────────────────────────────
   const [theme, setTheme] = useState(LIGHT_THEME);
@@ -173,9 +175,9 @@ export default function StudentGrid({
 
   // ── Column defs ───────────────────────────────────────────────────────────
   const columnDefs = useMemo(
-    () => buildColumnDefs({ getExamTotal, getExamMaximum, showInterviewScoreAction: !!onGiveScore }),
+    () => buildColumnDefs({ getExamTotal, getExamMaximum, showInterviewScoreAction: !!onGiveScore, canEditStatus }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [!!onGiveScore]  // callbacks are stable references from parent
+    [!!onGiveScore, canEditStatus]
   );
 
   const defaultColDef = useMemo(() => ({
@@ -351,7 +353,6 @@ export default function StudentGrid({
         ) : (
           <AgGridReact
             ref={gridRef}
-            modules={[AllCommunityModule]}
             theme={theme}
             rowData={students}
             columnDefs={columnDefs}

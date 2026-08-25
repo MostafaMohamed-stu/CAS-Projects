@@ -47,7 +47,8 @@ namespace CAS_Login_Back_End.Services.Authentication
         public async Task<LoginResponse> LoginAsync(
             string email,
             string password,
-            long businessEntityId,
+            long? businessEntityId,
+            string? businessEntityName = null,
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -56,8 +57,8 @@ namespace CAS_Login_Back_End.Services.Authentication
             if (string.IsNullOrWhiteSpace(password))
                 throw new ValidationException("Password is required.");
 
-            if (businessEntityId <= 0)
-                throw new ValidationException("Business entity ID is required.");
+            if (!businessEntityId.HasValue && string.IsNullOrWhiteSpace(businessEntityName))
+                throw new ValidationException("Business entity ID or name is required.");
 
             // Login is the single credential source. Profile data is resolved
             // from Account_Info by the Login.AccountId after authentication.
@@ -77,7 +78,7 @@ namespace CAS_Login_Back_End.Services.Authentication
                 throw new UnauthorizedException("Invalid email or password.");
 
             var businessEntity = await _businessEntityAuthorizationService.GetAuthorizedAsync(
-                account.Id, businessEntityId, cancellationToken);
+                account.Id, businessEntityId, businessEntityName, cancellationToken);
 
             var ssoToken = _tokenService.GenerateSsoToken(account.Id, account.NationalId);
             var ssoTokenId = GetRequiredTokenId(_tokenService.GetPrincipal(ssoToken));
@@ -129,14 +130,12 @@ namespace CAS_Login_Back_End.Services.Authentication
 
         public async Task<ExchangeTokenResponse> ExchangeTokenAsync(
             string ssoToken,
-            long businessEntityId,
+            long? businessEntityId,
+            string? businessEntityName = null,
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(ssoToken))
                 throw new ValidationException("Authorization token is required.");
-
-            if (businessEntityId <= 0)
-                throw new ValidationException("Business entity ID is required.");
 
             ClaimsPrincipal principal;
 
@@ -171,8 +170,26 @@ namespace CAS_Login_Back_End.Services.Authentication
 
             var account = await GetActiveAccountInfoAsync(login.AccountId, cancellationToken);
 
+            if ((!businessEntityId.HasValue || businessEntityId <= 0) && string.IsNullOrWhiteSpace(businessEntityName))
+            {
+                var firstEntityId = await _dbContext.Database
+                    .SqlQuery<long>($"""
+                        SELECT TOP 1 be.[ID]
+                        FROM [dbo].[Tbl_BusinessEntity] AS be
+                        INNER JOIN [dbo].[AccountRoles] AS ar
+                            ON ar.[BusinessEntityName] = be.[BusinessEntity]
+                        WHERE ar.[AccountID] = {account.Id}
+                        """)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (firstEntityId > 0)
+                {
+                    businessEntityId = firstEntityId;
+                }
+            }
+
             var businessEntity = await _businessEntityAuthorizationService.GetAuthorizedAsync(
-                account.Id, businessEntityId, cancellationToken);
+                account.Id, businessEntityId, businessEntityName, cancellationToken);
 
             var jwtCreatedAt = DateTime.UtcNow;
             var jwtToken = _tokenService.GenerateSystemToken(new SystemTokenDescriptor
@@ -246,6 +263,7 @@ namespace CAS_Login_Back_End.Services.Authentication
 
         public async Task<LogoutResponse> LogoutAsync(
             string systemToken,
+            bool revokeSso = false,
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(systemToken))
@@ -273,30 +291,32 @@ namespace CAS_Login_Back_End.Services.Authentication
             if (!systemExpiresAt.HasValue)
                 throw new UnauthorizedException("Authorization token expiration is missing.");
 
-            string? ssoTokenId = null;
-            DateTime? ssoExpiresAt = null;
-
-            var linkedSsoTokenId = systemPrincipal.FindFirst("SsoTokenId")?.Value;
-            if (!string.IsNullOrWhiteSpace(linkedSsoTokenId))
-            {
-                ssoTokenId = linkedSsoTokenId;
-                var createdAt = ReadCreatedAt(systemPrincipal);
-                if (createdAt.HasValue)
-                {
-                    ssoExpiresAt = createdAt.Value.AddHours(_jwtOptions.SsoExpirationHours);
-                }
-            }
-
             _tokenRevocationService.Revoke(systemTokenId, systemExpiresAt.Value);
 
-            if (!string.IsNullOrWhiteSpace(ssoTokenId) && ssoExpiresAt.HasValue)
-                _tokenRevocationService.Revoke(ssoTokenId, ssoExpiresAt.Value);
+            string? ssoTokenId = null;
+            bool ssoRevoked = false;
+
+            if (revokeSso)
+            {
+                var linkedSsoTokenId = systemPrincipal.FindFirst("SsoTokenId")?.Value;
+                if (!string.IsNullOrWhiteSpace(linkedSsoTokenId))
+                {
+                    ssoTokenId = linkedSsoTokenId;
+                    var createdAt = ReadCreatedAt(systemPrincipal);
+                    if (createdAt.HasValue)
+                    {
+                        var ssoExpiresAt = createdAt.Value.AddHours(_jwtOptions.SsoExpirationHours);
+                        _tokenRevocationService.Revoke(ssoTokenId, ssoExpiresAt);
+                        ssoRevoked = true;
+                    }
+                }
+            }
 
             return new LogoutResponse
             {
                 BusinessEntityId = tokenBusinessEntityId,
                 JwtTokenRevoked = true,
-                SsoTokenRevoked = !string.IsNullOrWhiteSpace(ssoTokenId)
+                SsoTokenRevoked = ssoRevoked
             };
         }
 

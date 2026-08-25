@@ -20,9 +20,16 @@ public sealed class BusinessEntityAuthorizationService : IBusinessEntityAuthoriz
 
     public async Task<BusinessEntityAssignment> GetAuthorizedAsync(
         long accountId,
-        long businessEntityId,
+        long? businessEntityId,
+        string? businessEntityName = null,
         CancellationToken cancellationToken = default)
     {
+        long? targetEntityId = businessEntityId > 0 ? businessEntityId : null;
+        string? trimmedName = string.IsNullOrWhiteSpace(businessEntityName) ? null : businessEntityName.Trim();
+
+        if (!targetEntityId.HasValue && trimmedName is null)
+            throw new ValidationException("Business entity ID or name is required.");
+
         var assignment = await _dbContext.Database
             .SqlQuery<BusinessEntityAssignmentRow>($"""
                 SELECT be.[ID] AS [Id],
@@ -36,9 +43,10 @@ public sealed class BusinessEntityAuthorizationService : IBusinessEntityAuthoriz
                     ON ar.[BusinessEntityName] = be.[BusinessEntity]
                 LEFT JOIN [dbo].[Roles] AS r ON r.[Id] = ar.[RoleID]
                 WHERE ar.[AccountID] = {accountId}
-                  AND be.[ID] = {businessEntityId}
+                  AND ({targetEntityId} IS NULL OR be.[ID] = {targetEntityId})
+                  AND ({trimmedName} IS NULL OR LOWER(be.[BusinessEntity]) = LOWER({trimmedName}))
                 """)
-            .SingleOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
 
         return assignment is null
             ? throw new UnauthorizedException("You do not have access to this business entity.")

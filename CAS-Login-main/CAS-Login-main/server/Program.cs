@@ -20,6 +20,22 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins(
+                "https://login.sewedy.com.eg",
+                "https://www.login.sewedy.com.eg",
+                "https://192.168.10.32",
+                "http://192.168.10.32",
+                "https://localhost",
+                "http://localhost")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddOptions<JwtOptions>()
     .BindConfiguration(JwtOptions.SectionName)
     .Validate(options =>
@@ -196,6 +212,7 @@ app.UseHttpsRedirection();
 
 // Forwarded headers are honored only from the trusted proxies/networks configured above.
 app.UseForwardedHeaders();
+app.UseCors("FrontendPolicy");
 
 app.UseRateLimiter();
 

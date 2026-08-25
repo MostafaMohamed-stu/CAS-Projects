@@ -60,10 +60,6 @@ export const usePagination = () => {
 
   // Fetch all students once on mount
   const fetchAllStudents = useCallback(async () => {
-    // Don't fetch if not authenticated
-    const token = localStorage.getItem("adminToken");
-    if (!token) return;
-
     setIsLoading(true);
     setError("");
     try {
@@ -91,8 +87,7 @@ export const usePagination = () => {
       }
     } catch (err) {
       setAllStudents([]);
-      const errMsg = err.response?.data?.message || err.response?.data || err.message || "Failed to fetch students";
-      setError(typeof errMsg === "string" ? errMsg : "Failed to fetch students");
+      setError(err.response?.data || "Failed to fetch students");
     } finally {
       setIsLoading(false);
     }

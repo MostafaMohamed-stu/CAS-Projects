@@ -44,22 +44,33 @@ const AdmissionSsoCallbackPage = () => {
       return;
     }
 
-    if (!ADMIN_ROLES.has(role)) {
+    const hasAdminRole = Array.from(ADMIN_ROLES).some(
+      (r) => r.toLowerCase() === (role || "").toLowerCase()
+    );
+
+    if (!hasAdminRole) {
       setError("Signing out because this account does not have access to the Admission administration portal.");
-      logoutFromAdmission({ redirectToLanding: true });
+      logoutFromAdmission();
       return;
     }
 
     localStorage.removeItem("receptionCoordinatorToken");
     loginAdmin(token);
 
-    const dashboardByRole = {
-      SuperAdmin: "/super-admin/dashboard",
-      Board: "/board-admin/dashboard",
-      StudentAffair: "/student-affair/search",
-      Interviewer: "/admin/dashboard",
-    };
-    navigate(dashboardByRole[role], { replace: true });
+    const normRole = (role || "").toLowerCase();
+    let targetPath = requestedDestination || "/admin/dashboard";
+
+    if (normRole === "superadmin") {
+      targetPath = "/super-admin/dashboard";
+    } else if (normRole === "board") {
+      targetPath = "/board-admin/dashboard";
+    } else if (normRole === "studentaffair") {
+      targetPath = "/student-affair/search";
+    } else if (normRole === "interviewer") {
+      targetPath = "/admin/dashboard";
+    }
+
+    navigate(targetPath, { replace: true });
   }, [loginAdmin, loginReceptionCoordinator, navigate, searchParams]);
 
   return (

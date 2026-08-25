@@ -127,10 +127,10 @@ export const adminAPI = {
   updateStudentStatus: (studentId, status) =>
     api.put(`/Admin/student/${studentId}/status`, { Status: status }),
 
-  exportStudentsToExcel: (columns) =>
+  exportStudentsToExcel: (columns, exportOptions = {}) =>
     api.post(
       "/Admin/export-students-excel",
-      { columns },
+      { columns, ...exportOptions },
       { responseType: "blob" }
     ),
 

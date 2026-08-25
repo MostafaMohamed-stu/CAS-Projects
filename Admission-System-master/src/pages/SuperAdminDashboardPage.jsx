@@ -1,8 +1,8 @@
+﻿import { logoutFromAdmission } from "../utils/casAuth";
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { logoutFromAdmission } from "../utils/casAuth";
 import Button from "../components/ui/Button";
 import Label from "../components/ui/Label";
 import Badge from "../components/ui/Badge";
@@ -95,38 +95,41 @@ const SuperAdminDashboardPage = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportColumns, setExportColumns] = useState([]);
   const [selectedColumns, setSelectedColumns] = useState([]);
+  const [exportFromDate, setExportFromDate] = useState("");
+  const [exportToDate, setExportToDate] = useState("");
+  const [exportStudentCount, setExportStudentCount] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [isLoadingColumns, setIsLoadingColumns] = useState(false);
   const [activeTab, setActiveTab] = useState("charts");
   const [userInfo, setUserInfo] = useState({ fullName: "", role: "" });
   const governorates = [
-    "القاهرة",
-    "الإسكندرية",
-    "الجيزة",
-    "الشرقية",
-    "الغربية",
-    "المنوفية",
-    "القليوبية",
-    "البحيرة",
-    "كفر الشيخ",
-    "دمياط",
-    "الدقهلية",
-    "المنيا",
-    "أسيوط",
-    "سوهاج",
-    "قنا",
-    "الأقصر",
-    "أسوان",
-    "بني سويف",
-    "الفيوم",
-    "الوادي الجديد",
-    "مطروح",
-    "شمال سيناء",
-    "جنوب سيناء",
-    "البحر الأحمر",
-    "بورسعيد",
-    "الإسماعيلية",
-    "السويس",
+    "Ø§Ù„Ù‚Ø§Ù‡Ø±Ø©",
+    "Ø§Ù„Ø¥Ø³ÙƒÙ†Ø¯Ø±ÙŠØ©",
+    "Ø§Ù„Ø¬ÙŠØ²Ø©",
+    "Ø§Ù„Ø´Ø±Ù‚ÙŠØ©",
+    "Ø§Ù„ØºØ±Ø¨ÙŠØ©",
+    "Ø§Ù„Ù…Ù†ÙˆÙÙŠØ©",
+    "Ø§Ù„Ù‚Ù„ÙŠÙˆØ¨ÙŠØ©",
+    "Ø§Ù„Ø¨Ø­ÙŠØ±Ø©",
+    "ÙƒÙØ± Ø§Ù„Ø´ÙŠØ®",
+    "Ø¯Ù…ÙŠØ§Ø·",
+    "Ø§Ù„Ø¯Ù‚Ù‡Ù„ÙŠØ©",
+    "Ø§Ù„Ù…Ù†ÙŠØ§",
+    "Ø£Ø³ÙŠÙˆØ·",
+    "Ø³ÙˆÙ‡Ø§Ø¬",
+    "Ù‚Ù†Ø§",
+    "Ø§Ù„Ø£Ù‚ØµØ±",
+    "Ø£Ø³ÙˆØ§Ù†",
+    "Ø¨Ù†ÙŠ Ø³ÙˆÙŠÙ",
+    "Ø§Ù„ÙÙŠÙˆÙ…",
+    "Ø§Ù„ÙˆØ§Ø¯ÙŠ Ø§Ù„Ø¬Ø¯ÙŠØ¯",
+    "Ù…Ø·Ø±ÙˆØ­",
+    "Ø´Ù…Ø§Ù„ Ø³ÙŠÙ†Ø§Ø¡",
+    "Ø¬Ù†ÙˆØ¨ Ø³ÙŠÙ†Ø§Ø¡",
+    "Ø§Ù„Ø¨Ø­Ø± Ø§Ù„Ø£Ø­Ù…Ø±",
+    "Ø¨ÙˆØ±Ø³Ø¹ÙŠØ¯",
+    "Ø§Ù„Ø¥Ø³Ù…Ø§Ø¹ÙŠÙ„ÙŠØ©",
+    "Ø§Ù„Ø³ÙˆÙŠØ³",
   ];
 
   // Get user info from JWT token
@@ -235,7 +238,11 @@ const SuperAdminDashboardPage = () => {
   const handleExportToExcel = async (columnsToInclude = selectedColumns) => {
     try {
       setError("");
-      const response = await adminAPI.exportStudentsToExcel(columnsToInclude);
+      const response = await adminAPI.exportStudentsToExcel(columnsToInclude, {
+        fromDate: exportFromDate || null,
+        toDate: exportToDate || null,
+        studentCount: exportStudentCount ? Number(exportStudentCount) : null,
+      });
 
       const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -785,6 +792,7 @@ const SuperAdminDashboardPage = () => {
                   getExamMaximum={getExamMaximum}
                   getExamPercentage={getExamPercentage}
                   hasIqExamScore={hasIqExamScore}
+                  canEditStatus={true}
                 />
               </CardContent>
             </Card>
@@ -1400,6 +1408,43 @@ const SuperAdminDashboardPage = () => {
                     </Button>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <label className="text-sm font-medium text-gray-700">
+                    From date
+                    <input
+                      type="date"
+                      value={exportFromDate}
+                      onChange={(event) => setExportFromDate(event.target.value)}
+                      disabled={isExporting}
+                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm font-medium text-gray-700">
+                    To date
+                    <input
+                      type="date"
+                      value={exportToDate}
+                      onChange={(event) => setExportToDate(event.target.value)}
+                      disabled={isExporting}
+                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
+                    />
+                  </label>
+                </div>
+
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  Number of students
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={exportStudentCount}
+                    onChange={(event) => setExportStudentCount(event.target.value)}
+                    placeholder="All students"
+                    disabled={isExporting}
+                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </label>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
                   {exportColumns.map((column) => (

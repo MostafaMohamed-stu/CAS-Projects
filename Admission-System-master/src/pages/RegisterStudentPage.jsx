@@ -10,7 +10,6 @@ import Checkbox from "../components/ui/Checkbox";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import { receptionCoordinatorAPI } from "../utils/api";
-import { logoutFromAdmission } from "../utils/casAuth";
 
 const DRAFT_KEY = "receptionCoordinatorRegisterDraft";
 
@@ -518,8 +517,8 @@ const RegisterStudentPage = () => {
         mathScore: parseFloat(formData.mathScore),
         englishScore: parseFloat(formData.englishScore),
         finalYearScore: parseFloat(formData.finalYearScore),
-        isAcceptanceLetterReceived: isAcceptanceLetterReceived,
-        ministryExamPercentage: isAcceptanceLetterReceived
+        isAcceptanceLetterReceived: formData.ministryExamPercentage !== "" && formData.ministryExamPercentage !== null,
+        ministryExamPercentage: formData.ministryExamPercentage !== "" && formData.ministryExamPercentage !== null
           ? parseFloat(formData.ministryExamPercentage)
           : 0,
         dateOfBirth: dateOnlyString,
@@ -536,7 +535,7 @@ const RegisterStudentPage = () => {
     } catch (err) {
       const errorData = err.response?.data;
       let errorMessage = "Failed to register student. Please try again.";
-      
+
       if (typeof errorData === "string") {
         errorMessage = errorData;
       } else if (errorData?.errors) {
@@ -548,7 +547,7 @@ const RegisterStudentPage = () => {
       } else if (errorData) {
         errorMessage = JSON.stringify(errorData);
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -564,7 +563,8 @@ const RegisterStudentPage = () => {
           <Link
             to="/apply-options"
             onClick={() => {
-              logoutFromAdmission();
+              localStorage.removeItem("adminToken");
+              localStorage.removeItem("receptionCoordinatorToken");
             }}
             className="inline-flex items-center text-[#ef3131] hover:underline mb-8 font-medium"
           >
@@ -670,7 +670,7 @@ const RegisterStudentPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="studentName" className="text-base font-medium text-gray-700">
-                          Student Name:
+                          Student Name In Arabic:
                         </Label>
                         <Input
                           key={`studentName-${formKey}`}
@@ -750,13 +750,12 @@ const RegisterStudentPage = () => {
                           readOnly
                           placeholder="Age"
                           aria-label="Age"
-                          className={`${
-                            isDobValid === null
+                          className={`${isDobValid === null
                               ? "border-gray-200"
                               : isDobValid
-                              ? "border-green-400 focus:border-green-500 focus-visible:ring-green-500"
-                              : "border-red-300 focus:border-red-500 focus-visible:ring-red-500"
-                          } flex h-11 md:h-12 rounded-md border bg-white px-2 text-base text-center font-medium select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 w-14`}
+                                ? "border-green-400 focus:border-green-500 focus-visible:ring-green-500"
+                                : "border-red-300 focus:border-red-500 focus-visible:ring-red-500"
+                            } flex h-11 md:h-12 rounded-md border bg-white px-2 text-base text-center font-medium select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 w-14`}
                           style={{ width: "3.25rem" }}
                         />
                       </div>
@@ -911,13 +910,12 @@ const RegisterStudentPage = () => {
                       </div>
                       <div className="pt-2 border-t border-indigo-200">
                         <p
-                          className={`${
-                            nationalIdInsights.birthDateMatchesInput === null
+                          className={`${nationalIdInsights.birthDateMatchesInput === null
                               ? "text-sm text-gray-600"
                               : nationalIdInsights.birthDateMatchesInput
-                              ? "text-sm text-green-700 font-medium"
-                              : "text-base text-amber-800 font-bold"
-                          }`}
+                                ? "text-sm text-green-700 font-medium"
+                                : "text-base text-amber-800 font-bold"
+                            }`}
                         >
                           {nationalIdInsights.birthDateMatchesInput === null ? (
                             "Enter Date of Birth to validate consistency."
@@ -950,11 +948,10 @@ const RegisterStudentPage = () => {
                       >
                         <span className="text-gray-700">{item.label}</span>
                         <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            item.pass
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${item.pass
                               ? "bg-green-100 text-green-700"
                               : "bg-amber-100 text-amber-700"
-                          }`}
+                            }`}
                         >
                           {item.pass ? "OK" : "Review"}
                         </span>

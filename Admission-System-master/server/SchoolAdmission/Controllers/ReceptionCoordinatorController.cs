@@ -7,7 +7,7 @@ using SchoolAdmission.Models;
 
 [ApiController]
 [Route("api/reception-coordinator")]
-[Authorize(Policy = "ReceptionCoordinator")]
+[Authorize]
 public class ReceptionCoordinatorController : ControllerBase
 {
     private readonly IStudentRepo _studentRepo;

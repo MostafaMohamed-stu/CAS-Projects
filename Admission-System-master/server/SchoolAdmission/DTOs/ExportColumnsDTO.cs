@@ -5,6 +5,9 @@ namespace SchoolAdmission.DTOs;
 public class ExportStudentsRequestDTO
 {
     public List<string>? Columns { get; set; }
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
+    public int? StudentCount { get; set; }
 }
 
 public class ExportColumnDefinitionDTO

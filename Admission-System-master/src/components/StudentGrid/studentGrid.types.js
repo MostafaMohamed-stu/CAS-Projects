@@ -24,6 +24,7 @@
  * @property {string}  [parentPhoneNumber]
  * @property {number}  [interviewPercentage]
  * @property {number}  [totalPercentage]
+ * @property {number[]} [interviewerIds] - Ordered roster used to map interview scores to columns
  * @property {Array}   [interviewers]
  */
 

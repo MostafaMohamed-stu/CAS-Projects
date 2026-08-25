@@ -16,10 +16,11 @@ ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Get configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var jwtKey = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is required."));
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "CAS.Api";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "CAS.Clients";
+var jwtKeyValue = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key configuration is required.");
+var jwtKey = Encoding.UTF8.GetBytes(jwtKeyValue);
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "DefaultIssuer";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "DefaultAudience";
 
 builder.Services.AddDbContext<SchoolAdmissionDbContext>(options => options.UseSqlServer(connectionString));
 
@@ -43,10 +44,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// CAS issues the shared system JWT used by Admission staff and coordinators.
-builder.Services.AddAuthentication().AddJwtBearer(options =>
+// Simple JWT Authentication
+builder.Services.AddAuthentication(options => { }).AddJwtBearer(options =>
     {
-        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidIssuer = jwtIssuer,
@@ -56,18 +56,11 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
-            RoleClaimType = "Role",
-            NameClaimType = "Email"
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdmissionAdmin", policy => policy.RequireClaim(
-        "Role", "Interviewer", "Board", "SuperAdmin", "StudentAffair"));
-    options.AddPolicy("ReceptionCoordinator", policy => policy.RequireClaim(
-        "Role", "ReceptionCoordinator"));
-});
+builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();

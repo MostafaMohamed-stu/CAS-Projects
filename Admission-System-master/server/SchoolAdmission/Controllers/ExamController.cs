@@ -35,7 +35,6 @@ public class ExamController : ControllerBase
     {
         return User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? User.FindFirst("sub")?.Value
-            ?? User.FindFirst("Email")?.Value
             ?? string.Empty;
     }
 

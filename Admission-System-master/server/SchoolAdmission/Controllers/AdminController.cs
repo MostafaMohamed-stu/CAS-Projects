@@ -13,7 +13,7 @@ using System;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "AdmissionAdmin")]
+[Authorize]
 public class AdminController : ControllerBase
 {
     private readonly IAdminRepo _adminRepo;
@@ -21,7 +21,9 @@ public class AdminController : ControllerBase
     private readonly SchoolAdmissionDbContext _db;
     private static readonly List<ExportColumnDefinitionDTO> ExportableColumns = new()
     {
-        new ExportColumnDefinitionDTO { Key = "StudName", Label = "Student Name", Description = "Full name of the applicant" },
+        new ExportColumnDefinitionDTO { Key = "StudentNameEnglish", Label = "Student Name English", Description = "English full name of the applicant" },
+        new ExportColumnDefinitionDTO { Key = "StudentNameArabic", Label = "Student Name Arabic", Description = "Arabic full name of the applicant" },
+        new ExportColumnDefinitionDTO { Key = "CreatedAt", Label = "Created At", Description = "Date the student record was created" },
         new ExportColumnDefinitionDTO { Key = "SocialID", Label = "National ID", Description = "National identification number" },
         new ExportColumnDefinitionDTO { Key = "MathPrepScore", Label = "Math Prep Score", Description = "Preparatory Math score" },
         new ExportColumnDefinitionDTO { Key = "EnglishPrepScore", Label = "English Prep Score", Description = "Preparatory English score" },
@@ -41,7 +43,7 @@ public class AdminController : ControllerBase
         new ExportColumnDefinitionDTO { Key = "SchoolExamSection_SUM_Scores", Label = "Exam Section Sum", Description = "Sum of school exam section scores" },
         new ExportColumnDefinitionDTO { Key = "SchoolExamSection_Count", Label = "Exam Section Count", Description = "Number of school exam sections" },
         new ExportColumnDefinitionDTO { Key = "SchoolExamSection_Scores_AVG%", Label = "Exam Section Avg %", Description = "Average school exam section percentage" },
-        new ExportColumnDefinitionDTO { Key = "ResultAdmission1%", Label = "Result Admission 1 %", Description = "Interview + School exam results percentage" },
+        new ExportColumnDefinitionDTO { Key = "ResultAdmission1%", Label = "Result Admission 1 %", Description = "Interview 50% + School exam results percentage 50%" },
         new ExportColumnDefinitionDTO { Key = "ResultAdmission2%", Label = "Result Admission 2 %", Description = "Overall result admission percentage" }
     };
 
@@ -65,15 +67,11 @@ public class AdminController : ControllerBase
         {
             var userEmail = await _adminRepo.GetCurrentAdminEmailAsync(User);
             if (string.IsNullOrEmpty(userEmail))
-            {
-                // Debug: log all claims to help diagnose
-                var claims = User.Claims.Select(c => $"{c.Type}={c.Value}").ToList();
-                return Unauthorized($"Admin email not found in token. Claims: [{string.Join(", ", claims)}]");
-            }
+                return Unauthorized("Admin not found or not authorized. Please log in again.");
 
             var adminAccount = await _adminRepo.GetAccountByEmailAsync(userEmail);
             if (adminAccount == null)
-                return Unauthorized($"No account found for email: {userEmail}");
+                return Unauthorized("Admin not found or not authorized. Please log in again.");
 
             var request = new PaginationRequestDTO
             {
@@ -204,11 +202,10 @@ public class AdminController : ControllerBase
             if (adminAccount == null)
                 return Unauthorized("Admin not found or not authorized. Please log in again.");
 
-            var isBoard = await _authRepo.IsBoardAsync(userEmail);
             var isSuperAdmin = await _authRepo.IsSuperAdminAsync(userEmail);
-            
-            if (!isBoard && !isSuperAdmin)
-                return Forbid("Only SuperAdmin and Board members can update student status.");
+
+            if (!isSuperAdmin)
+                return Forbid("Only SuperAdmin can update student status.");
 
             await _adminRepo.UpdateStudentStatusAsync(studentId, dto.Status);
 
@@ -278,7 +275,15 @@ public class AdminController : ControllerBase
             if (!isBoard && !isSuperAdmin)
                 return Forbid("Only SuperAdmin and Board members can export students data.");
 
-            var students = await _adminRepo.GetStudentsForSuperAdminAsync(userEmail);
+            if (request?.FromDate.HasValue == true && request.ToDate.HasValue && request.FromDate > request.ToDate)
+                return BadRequest("From date cannot be later than To date.");
+            if (request?.StudentCount is <= 0)
+                return BadRequest("Student count must be greater than zero.");
+
+            var students = await _adminRepo.GetStudentsForSuperAdminAsync(
+                userEmail,
+                request?.FromDate,
+                request?.ToDate);
 
             if (students == null || students.Count == 0)
             {
@@ -303,7 +308,9 @@ public class AdminController : ControllerBase
             var headerLookup = ExportableColumns.ToDictionary(c => c.Key, c => c.Label);
             var columnSelectors = new Dictionary<string, Func<dynamic, object?>>
             {
-                ["StudName"] = data => data.Student.FullName ?? "",
+                ["StudentNameEnglish"] = data => data.Student.FullNameEn ?? data.Student.FullName ?? "",
+                ["StudentNameArabic"] = data => data.Student.FullNameAr ?? "",
+                ["CreatedAt"] = data => data.Student.CreatedAt,
                 ["SocialID"] = data => data.Student.NationalId ?? "",
                 ["MathPrepScore"] = data => data.MathPrepScore,
                 ["EnglishPrepScore"] = data => data.EnglishPrepScore,
@@ -348,7 +355,7 @@ public class AdminController : ControllerBase
                 var studentId = (long)student.Id;
                 var interviewScores = await _db.InterviewScores
                     .Where(i => i.AccountId == studentId)
-                    .OrderBy(i => i.Id)
+                    .OrderBy(i => i.InterviewerId)
                     .Select(i => new
                     {
                         Admin = _db.Accounts.Where(a => a.Id == i.InterviewerId).Select(a => a.FullNameEn).FirstOrDefault() ?? "Unknown Admin",
@@ -423,10 +430,18 @@ public class AdminController : ControllerBase
                 });
             }
 
-            // Highest Result Admission 1 percentage always appears first.
+            // Export the highest Result Admission 2 percentage first.
             processedStudents = processedStudents
-                .OrderByDescending(data => (double)data.ResultAdmission1Percent)
+                .OrderByDescending(data => (double)data.ResultAdmission2Percent)
+                .ThenBy(data => (long)data.Student.Id)
                 .ToList();
+
+            if (request?.StudentCount is int studentCount)
+            {
+                processedStudents = processedStudents
+                    .Take(studentCount)
+                    .ToList();
+            }
 
             // Fill Excel cells
             int row = 2;

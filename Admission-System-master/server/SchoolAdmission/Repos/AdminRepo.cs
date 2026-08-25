@@ -21,6 +21,12 @@ public class AdminRepo : IAdminRepo
         _settingsService = settingsService;
     }
 
+    private async Task<List<long>> GetOrderedInterviewerIdsAsync()
+    {
+        var interviewerIds = await _authRepo.GetAccountIdsByRoleAsync("Interviewer");
+        return interviewerIds.OrderBy(id => id).ToList();
+    }
+
     public async Task<List<dynamic>> GetStudentsForAdminAsync(string adminEmail)
     {
         var isInterviewer = await _authRepo.IsInterviewerAsync(adminEmail);
@@ -65,12 +71,15 @@ public class AdminRepo : IAdminRepo
                 .FirstOrDefaultAsync(i => i.AccountId == s.Id && i.InterviewerId == adminAccount.Id);
 
             // Get all interviewer account IDs using the new role resolution logic
-            var interviewerAccountIds = await _authRepo.GetAccountIdsByRoleAsync("Interviewer");
+            var interviewerAccountIds = await GetOrderedInterviewerIdsAsync();
             
             var interviewScores = await _db.InterviewScores
                 .Where(i => i.AccountId == s.Id)
+                .OrderBy(i => i.InterviewerId)
                 .Select(i => new
                 {
+                    InterviewerId = i.InterviewerId,
+                    Email = _db.Accounts.Where(a => a.Id == i.InterviewerId).Select(a => a.Email).FirstOrDefault() ?? "",
                     Admin = _db.Accounts.Where(a => a.Id == i.InterviewerId).Select(a => a.FullNameEn).FirstOrDefault() ?? "Interviewer",
                     Score = (double)i.Score
                 })
@@ -119,6 +128,7 @@ public class AdminRepo : IAdminRepo
                 ExamTotal = examTotal,
                 InterviewScore = interviewScoreValue,
                 InterviewScores = interviewScores,
+                InterviewerIds = interviewerAccountIds,
                 InterviewPercentage = totalWithInterview,
                 TotalScore = examTotal + interviewScores.Sum(i => i.Score),
                 TotalPercentage = Math.Round(totalPercentage, 2),
@@ -129,7 +139,7 @@ public class AdminRepo : IAdminRepo
         return result;
     }
 
-    public async Task<List<dynamic>> GetStudentsForSuperAdminAsync(string superAdminEmail)
+    public async Task<List<dynamic>> GetStudentsForSuperAdminAsync(string superAdminEmail, DateOnly? fromDate = null, DateOnly? toDate = null)
     {
         var isSuperAdmin = await _authRepo.IsSuperAdminAsync(superAdminEmail);
         var isBoard = await _authRepo.IsBoardAsync(superAdminEmail);
@@ -144,14 +154,20 @@ public class AdminRepo : IAdminRepo
         if (applicantRole == null)
             return new List<dynamic>();
 
-        var students = await _db.Accounts
+        IQueryable<Account> studentsQuery = _db.Accounts
             .Include(a => a.AdmissionProfile)
             .Where(a => a.RoleId == applicantRole.Id && a.IsActive)
+            .Where(a => !fromDate.HasValue || (a.CreatedAt.HasValue && a.CreatedAt.Value >= fromDate.Value))
+            .Where(a => !toDate.HasValue || (a.CreatedAt.HasValue && a.CreatedAt.Value <= toDate.Value))
+            .OrderBy(a => a.CreatedAt)
+            .ThenBy(a => a.Id);
+
+        var studentsList = await studentsQuery
             .ToListAsync();
 
         var result = new List<dynamic>();
 
-        foreach (var s in students)
+        foreach (var s in studentsList)
         {
             var admissionProfile = s.AdmissionProfile;
 
@@ -180,6 +196,8 @@ public class AdminRepo : IAdminRepo
             {
                 s.Id,
                 FullName = s.FullNameEn,
+                FullNameEn = s.FullNameEn,
+                FullNameAr = s.FullNameAr,
                 PhoneNumber = admissionProfile?.PhoneNumber ?? "",
                 ParentPhoneNumber = admissionProfile?.ParentPhoneNumber ?? "",
                 PreviousSchoolType = admissionProfile?.PreviousSchoolType ?? "",
@@ -302,12 +320,8 @@ public class AdminRepo : IAdminRepo
 
     public Task<string> GetCurrentAdminEmailAsync(ClaimsPrincipal user)
     {
-        return Task.FromResult(
-            user.FindFirst("Email")?.Value
-            ?? user.FindFirst(ClaimTypes.Email)?.Value
-            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        return Task.FromResult(user.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? user.FindFirst("sub")?.Value
-            ?? user.Identity?.Name
             ?? string.Empty);
     }
 
@@ -376,7 +390,7 @@ public class AdminRepo : IAdminRepo
         }
 
         // Get all interviewer account IDs using the new role resolution logic
-        var interviewerAccountIds = await _authRepo.GetAccountIdsByRoleAsync("Interviewer");
+        var interviewerAccountIds = await GetOrderedInterviewerIdsAsync();
 
         // Count the total number of records before pagination and materialization
         var totalCount = await studentsQuery.CountAsync();
@@ -397,8 +411,11 @@ public class AdminRepo : IAdminRepo
                     .FirstOrDefault(),
                 InterviewScores = _db.InterviewScores
                     .Where(i => i.AccountId == s.Id)
+                    .OrderBy(i => i.InterviewerId)
                     .Select(i => new
                     {
+                        InterviewerId = i.InterviewerId,
+                        Email = _db.Accounts.Where(a => a.Id == i.InterviewerId).Select(a => a.Email).FirstOrDefault() ?? "",
                         Admin = _db.Accounts.Where(a => a.Id == i.InterviewerId).Select(a => a.FullNameEn).FirstOrDefault() ?? "Interviewer",
                         Score = (double)i.Score
                     }).ToList(),
@@ -483,6 +500,7 @@ public class AdminRepo : IAdminRepo
                 ExamTotal = examTotal,
                 InterviewScore = s.InterviewScore,
                 InterviewScores = s.InterviewScores,
+                InterviewerIds = interviewerAccountIds,
                 TotalScore = examTotal + s.InterviewScores.Sum(i => i.Score),
                 TotalPercentage = Math.Round(totalPercentage, 2),
                 HasLaptop = s.AdmissionProfile?.HasLaptop ?? false,
@@ -573,7 +591,7 @@ public class AdminRepo : IAdminRepo
         }
 
         // Get all interviewer account IDs using the new role resolution logic
-        var interviewerAccountIds = await _authRepo.GetAccountIdsByRoleAsync("Interviewer");
+        var interviewerAccountIds = await GetOrderedInterviewerIdsAsync();
 
         // Count the total number of records before pagination and materialization
         var totalCount = await studentsQuery.CountAsync();
@@ -603,8 +621,11 @@ public class AdminRepo : IAdminRepo
                 ExamResults = _db.StudentExamResults.FirstOrDefault(ser => ser.AccountId == s.Id),
                 InterviewScores = _db.InterviewScores
                     .Where(i => i.AccountId == s.Id)
+                    .OrderBy(i => i.InterviewerId)
                     .Select(i => new
                     {
+                        InterviewerId = i.InterviewerId,
+                        Email = _db.Accounts.Where(a => a.Id == i.InterviewerId).Select(a => a.Email).FirstOrDefault() ?? "",
                         Admin = _db.Accounts.Where(a => a.Id == i.InterviewerId).Select(a => a.FullNameEn).FirstOrDefault() ?? "Interviewer",
                         Score = (double)i.Score
                     }).ToList(),
@@ -685,6 +706,7 @@ public class AdminRepo : IAdminRepo
                 ExamIqMaxScore = activeSettings.IqWeight,
                 ExamTotal = examTotal,
                 InterviewScores = s.InterviewScores,
+                InterviewerIds = interviewerAccountIds,
                 TotalScore = examTotal + s.InterviewScores.Sum(i => i.Score),
                 TotalPercentage = Math.Round(totalPercentage, 2),
                 s.HasOnlineTrainingCourses,

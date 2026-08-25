@@ -67,7 +67,7 @@ public class RoleService : IRoleService
         }
 
         var assignment = await _businessEntityAuthorizationService.GetAuthorizedAsync(
-            accountId, businessEntityId, cancellationToken);
+            accountId, businessEntityId, businessEntityName: null, cancellationToken: cancellationToken);
 
         if (!assignment.RoleId.HasValue)
         {

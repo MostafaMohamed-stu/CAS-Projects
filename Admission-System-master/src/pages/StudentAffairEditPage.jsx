@@ -13,8 +13,8 @@ import {
 } from "../components/ui/Card";
 import { Alert, AlertDescription } from "../components/ui/Alert";
 import Header from "../components/layout/Header";
-import { logoutFromAdmission } from "../utils/casAuth";
 import { studentAffairAPI } from "../utils/api";
+import { logoutFromAdmission } from "../utils/casAuth";
 
 const StudentAffairEditPage = () => {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const StudentAffairEditPage = () => {
     isArabicStudy: false,
     isLanguagesStudy: false,
     hasOnlineTrainingCourses: null,
-    hasIcdllicense: null,
+    hasICDLLicense: null,
     hasLaptop: null,
   });
 
@@ -56,7 +56,7 @@ const StudentAffairEditPage = () => {
     const studentData = location.state.studentData;
     setFormData({
       nationalId: studentData.nationalId || location.state.nationalId || "",
-      studentName: studentData.studentName || "",
+      studentName: studentData.fullName || studentData.studentName || "",
       dateOfBirth: studentData.dateOfBirth
         ? new Date(studentData.dateOfBirth).toISOString().split("T")[0]
         : "",
@@ -74,7 +74,7 @@ const StudentAffairEditPage = () => {
       isArabicStudy: studentData.previousSchoolType === "عربي",
       isLanguagesStudy: studentData.previousSchoolType === "لغات",
       hasOnlineTrainingCourses: studentData.hasOnlineTrainingCourses,
-      hasIcdllicense: studentData.hasICDLLicense,
+      hasICDLLicense: studentData.hasICDLLicense,
       hasLaptop: studentData.hasLaptop,
     });
   }, [location.state, navigate]);
@@ -200,6 +200,9 @@ const StudentAffairEditPage = () => {
           } else if (key === "isArabicStudy" || key === "isLanguagesStudy") {
             // Skip these as we'll handle previousSchoolType separately
             return;
+          } else if (key === "studentName") {
+            updateData.fullName = formData[key];
+            updateData.studentName = formData[key];
           } else {
             updateData[key] = formData[key];
           }
@@ -1018,10 +1021,10 @@ const StudentAffairEditPage = () => {
                             <input
                               type="radio"
                               id="hasIcdllicenseYes"
-                              name="hasIcdllicense"
-                              checked={formData.hasIcdllicense === true}
+                              name="hasICDLLicense"
+                              checked={formData.hasICDLLicense === true}
                               onChange={() =>
-                                handleInputChange("hasIcdllicense", true)
+                                handleInputChange("hasICDLLicense", true)
                               }
                               className="w-4 h-4 text-[#ef3131] bg-gray-100 border-gray-300"
                             />
@@ -1037,10 +1040,10 @@ const StudentAffairEditPage = () => {
                             <input
                               type="radio"
                               id="hasIcdllicenseNo"
-                              name="hasIcdllicense"
-                              checked={formData.hasIcdllicense === false}
+                              name="hasICDLLicense"
+                              checked={formData.hasICDLLicense === false}
                               onChange={() =>
-                                handleInputChange("hasIcdllicense", false)
+                                handleInputChange("hasICDLLicense", false)
                               }
                               className="w-4 h-4 text-[#ef3131] bg-gray-100 border-gray-300"
                             />

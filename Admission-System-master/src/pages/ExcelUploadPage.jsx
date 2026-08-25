@@ -1,9 +1,9 @@
+﻿import { logoutFromAdmission } from "../utils/casAuth";
 "use client";
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { logoutFromAdmission } from "../utils/casAuth";
 import Button from "../components/ui/Button";
 import {
   Card,
@@ -124,17 +124,17 @@ const ExcelUploadPage = () => {
       ],
           // English Math Questions (MathEN)
     ["What is 2 + 2?", "3", "4", "5", "6", "4", "MathEN"],
-    ["What is 5 × 3?", "12", "15", "18", "20", "15", "MathEN"],
-    ["What is 10 ÷ 2?", "3", "4", "5", "6", "5", "MathEN"],
+    ["What is 5 Ã— 3?", "12", "15", "18", "20", "15", "MathEN"],
+    ["What is 10 Ã· 2?", "3", "4", "5", "6", "5", "MathEN"],
     ["What is the square root of 16?", "2", "4", "8", "16", "4", "MathEN"],
-    ["What is 7 × 8?", "49", "56", "63", "64", "56", "MathEN"],
+    ["What is 7 Ã— 8?", "49", "56", "63", "64", "56", "MathEN"],
 
       // Arabic Math Questions (MathAR)
-      ["ما هو ناتج ٢ + ٣؟", "٤", "٥", "٦", "٧", "٥", "MathAR"],
-      ["ما هو ناتج ٤ × ٢؟", "٦", "٨", "١٠", "١٢", "٨", "MathAR"],
-      ["ما هو ناتج ١٠ ÷ ٢؟", "٣", "٤", "٥", "٦", "٥", "MathAR"],
-      ["ما هو الجذر التربيعي لـ ٢٥؟", "٣", "٤", "٥", "٦", "٥", "MathAR"],
-      ["ما هو ناتج ٦ × ٧؟", "٣٦", "٤٢", "٤٨", "٥٤", "٤٢", "MathAR"],
+      ["Ù…Ø§ Ù‡Ùˆ Ù†Ø§ØªØ¬ Ù¢ + Ù£ØŸ", "Ù¤", "Ù¥", "Ù¦", "Ù§", "Ù¥", "MathAR"],
+      ["Ù…Ø§ Ù‡Ùˆ Ù†Ø§ØªØ¬ Ù¤ Ã— Ù¢ØŸ", "Ù¦", "Ù¨", "Ù¡Ù ", "Ù¡Ù¢", "Ù¨", "MathAR"],
+      ["Ù…Ø§ Ù‡Ùˆ Ù†Ø§ØªØ¬ Ù¡Ù  Ã· Ù¢ØŸ", "Ù£", "Ù¤", "Ù¥", "Ù¦", "Ù¥", "MathAR"],
+      ["Ù…Ø§ Ù‡Ùˆ Ø§Ù„Ø¬Ø°Ø± Ø§Ù„ØªØ±Ø¨ÙŠØ¹ÙŠ Ù„Ù€ Ù¢Ù¥ØŸ", "Ù£", "Ù¤", "Ù¥", "Ù¦", "Ù¥", "MathAR"],
+      ["Ù…Ø§ Ù‡Ùˆ Ù†Ø§ØªØ¬ Ù¦ Ã— Ù§ØŸ", "Ù£Ù¦", "Ù¤Ù¢", "Ù¤Ù¨", "Ù¥Ù¤", "Ù¤Ù¢", "MathAR"],
 
       // English Language Questions
       [
@@ -185,48 +185,48 @@ const ExcelUploadPage = () => {
 
       // Arabic Language Questions
       [
-        "ما هو جمع كلمة 'كتاب'؟",
-        "كتب",
-        "كتابات",
-        "كتابون",
-        "كتابين",
-        "كتب",
+        "Ù…Ø§ Ù‡Ùˆ Ø¬Ù…Ø¹ ÙƒÙ„Ù…Ø© 'ÙƒØªØ§Ø¨'ØŸ",
+        "ÙƒØªØ¨",
+        "ÙƒØªØ§Ø¨Ø§Øª",
+        "ÙƒØªØ§Ø¨ÙˆÙ†",
+        "ÙƒØªØ§Ø¨ÙŠÙ†",
+        "ÙƒØªØ¨",
         "Arabic",
       ],
       [
-        "ما هو مفرد كلمة 'أقلام'؟",
-        "قلم",
-        "قلام",
-        "أقلام",
-        "قلمون",
-        "قلم",
+        "Ù…Ø§ Ù‡Ùˆ Ù…ÙØ±Ø¯ ÙƒÙ„Ù…Ø© 'Ø£Ù‚Ù„Ø§Ù…'ØŸ",
+        "Ù‚Ù„Ù…",
+        "Ù‚Ù„Ø§Ù…",
+        "Ø£Ù‚Ù„Ø§Ù…",
+        "Ù‚Ù„Ù…ÙˆÙ†",
+        "Ù‚Ù„Ù…",
         "Arabic",
       ],
       [
-        "ما هو جمع كلمة 'طالب'؟",
-        "طلاب",
-        "طلبات",
-        "طالبون",
-        "طالبين",
-        "طلاب",
+        "Ù…Ø§ Ù‡Ùˆ Ø¬Ù…Ø¹ ÙƒÙ„Ù…Ø© 'Ø·Ø§Ù„Ø¨'ØŸ",
+        "Ø·Ù„Ø§Ø¨",
+        "Ø·Ù„Ø¨Ø§Øª",
+        "Ø·Ø§Ù„Ø¨ÙˆÙ†",
+        "Ø·Ø§Ù„Ø¨ÙŠÙ†",
+        "Ø·Ù„Ø§Ø¨",
         "Arabic",
       ],
       [
-        "ما هو مفرد كلمة 'مدارس'؟",
-        "مدرسة",
-        "مدارس",
-        "مدرسون",
-        "مدرسين",
-        "مدرسة",
+        "Ù…Ø§ Ù‡Ùˆ Ù…ÙØ±Ø¯ ÙƒÙ„Ù…Ø© 'Ù…Ø¯Ø§Ø±Ø³'ØŸ",
+        "Ù…Ø¯Ø±Ø³Ø©",
+        "Ù…Ø¯Ø§Ø±Ø³",
+        "Ù…Ø¯Ø±Ø³ÙˆÙ†",
+        "Ù…Ø¯Ø±Ø³ÙŠÙ†",
+        "Ù…Ø¯Ø±Ø³Ø©",
         "Arabic",
       ],
       [
-        "ما هو جمع كلمة 'معلم'؟",
-        "معلمون",
-        "معلمين",
-        "معلمات",
-        "معلم",
-        "معلمون",
+        "Ù…Ø§ Ù‡Ùˆ Ø¬Ù…Ø¹ ÙƒÙ„Ù…Ø© 'Ù…Ø¹Ù„Ù…'ØŸ",
+        "Ù…Ø¹Ù„Ù…ÙˆÙ†",
+        "Ù…Ø¹Ù„Ù…ÙŠÙ†",
+        "Ù…Ø¹Ù„Ù…Ø§Øª",
+        "Ù…Ø¹Ù„Ù…",
+        "Ù…Ø¹Ù„Ù…ÙˆÙ†",
         "Arabic",
       ],
 
@@ -564,19 +564,19 @@ const ExcelUploadPage = () => {
                     Important Notes
                   </h3>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• First row should be headers (will be skipped)</li>
-                    <li>• Section values must match an existing section</li>
-                    <li>• Empty rows will be ignored</li>
+                    <li>â€¢ First row should be headers (will be skipped)</li>
+                    <li>â€¢ Section values must match an existing section</li>
+                    <li>â€¢ Empty rows will be ignored</li>
                     <li>
-                      • Questions will be assigned to sections based on Column G
+                      â€¢ Questions will be assigned to sections based on Column G
                     </li>
                     <li>
-                      • Arabic characters are fully supported in the template
+                      â€¢ Arabic characters are fully supported in the template
                     </li>
-                    <li>• Use MathEN section for English math questions</li>
-                    <li>• Use MathAR section for Arabic math questions</li>
-                    <li>• Use IQ section for intelligence questions</li>
-                    <li>• Only SuperAdmin users can upload questions</li>
+                    <li>â€¢ Use MathEN section for English math questions</li>
+                    <li>â€¢ Use MathAR section for Arabic math questions</li>
+                    <li>â€¢ Use IQ section for intelligence questions</li>
+                    <li>â€¢ Only SuperAdmin users can upload questions</li>
                   </ul>
                 </div>
 
@@ -586,12 +586,12 @@ const ExcelUploadPage = () => {
                   </h3>
                   <div className="text-sm text-gray-600">
                     <div className="grid grid-cols-2 gap-2">
-                      <div>• Arabic (Arabic)</div>
-                      <div>• English (English)</div>
-                      <div>• MathEN (English)</div>
-                      <div>• MathAR (Arabic)</div>
-                      <div>• Software (English)</div>
-                      <div>• IQ (Language-neutral)</div>
+                      <div>â€¢ Arabic (Arabic)</div>
+                      <div>â€¢ English (English)</div>
+                      <div>â€¢ MathEN (English)</div>
+                      <div>â€¢ MathAR (Arabic)</div>
+                      <div>â€¢ Software (English)</div>
+                      <div>â€¢ IQ (Language-neutral)</div>
                     </div>
                   </div>
                 </div>
@@ -683,3 +683,4 @@ const ExcelUploadPage = () => {
 };
 
 export default ExcelUploadPage;
+

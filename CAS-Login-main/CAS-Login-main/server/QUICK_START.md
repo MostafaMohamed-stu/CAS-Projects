@@ -68,10 +68,18 @@
 ```json
 {
   "email": "user@example.com",
-  "password": "password123",
-  "businessEntityName": "Zspark"
+  "password": "password123"
 }
 ```
+
+The business entity ID is supplied in the route, for example:
+
+```http
+POST http://localhost:5148/api/Auth/login/3
+```
+
+The backend reads the redirect destination from `Tbl_BusinessEntity.URL`; clients do not
+send a business entity name or redirect URL.
 
 ### Login Response
 ```json
