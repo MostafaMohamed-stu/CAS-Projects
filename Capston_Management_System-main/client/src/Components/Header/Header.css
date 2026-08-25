@@ -1,0 +1,98 @@
+.header {
+    display: flex;
+    text-align: left;
+    animation: fadeInDown 0.6s ease-out;
+  }
+  
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .greeting {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: transform 0.3s ease;
+  }
+  
+ 
+  .greeting-text {
+    font-size: 16px;
+    text-align: left !important;
+    color: #718096;
+  }
+  
+  .greeting-name {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2d3748;
+    background: linear-gradient(45deg, #2d3748, #e53e3e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease-in-out infinite;
+  }
+
+  .greeting-role {
+    font-size: 18px;
+    font-weight: 400;
+    color: #718096;
+    -webkit-text-fill-color: #718096;
+    background: none;
+    animation: none;
+    margin-left: 4px;
+  }
+  
+  @keyframes gradientShift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+/* Loading dots animation */
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #e53e3e;
+  animation: loadingDots 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes loadingDots {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

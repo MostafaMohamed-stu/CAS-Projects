@@ -1,0 +1,26 @@
+.urp-page { padding: 24px; width: 100%; max-width: 100%; }
+.urp-header { margin-bottom: 16px; }
+.urp-title { margin: 0; color: #2d3748; font-size: 28px; font-weight: 700; }
+.urp-filters { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.urp-search { display: flex; gap: 8px; align-items: center; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; background: #fff; }
+.urp-input { border: none; outline: none; min-width: 260px; }
+.urp-filter-group { display: flex; gap: 8px; align-items: center; }
+.urp-select { padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+.urp-reports-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; }
+.urp-report-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+.urp-report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.urp-report-title { margin: 0; font-size: 18px; color: #1f2937; font-weight: 700; }
+.urp-status-badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #f3f4f6; color: #374151; font-weight: 600; }
+.urp-status-badge.submitted { background: #eff6ff; color: #1d4ed8; }
+.urp-status-badge.under { background: #fff7ed; color: #c2410c; }
+.urp-status-badge.confirmed { background: #ecfdf5; color: #065f46; }
+.urp-report-meta { display: flex; gap: 12px; font-size: 12px; color: #6b7280; margin-bottom: 8px; flex-wrap: wrap; }
+.urp-author { font-weight: 600; color: #374151; }
+.urp-class { color: #4b5563; }
+.urp-date { font-style: italic; }
+.urp-content { color: #374151; white-space: pre-wrap; margin: 0; }
+.urp-actions { margin-top: 8px; display: flex; justify-content: flex-end; }
+.urp-confirm-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.urp-confirm-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.urp-loading, .urp-empty, .urp-no-access { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; color: #6b7280; }
+

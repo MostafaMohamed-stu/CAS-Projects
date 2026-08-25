@@ -1,0 +1,201 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+}
+
+.App {
+  min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Global Form Alignment Fixes */
+input, textarea, select {
+  text-align: left !important;
+  text-align-last: left !important;
+}
+
+input::placeholder, textarea::placeholder {
+  text-align: left !important;
+}
+
+.form-group, .form-label, .form-input, .form-textarea, .form-select {
+  text-align: left !important;
+}
+
+/* Ensure all form containers are left-aligned */
+form, .form-container, .modal-content, .task-form {
+  text-align: left !important;
+}
+
+/* Global Long Text Handling */
+* {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Text truncation for long content */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Long text handling for specific elements */
+h1, h2, h3, h4, h5, h6 {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+p, span, div {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* Card and container overflow handling */
+.card, .modal, .container, .section {
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Table cell text handling */
+td, th {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Button text handling */
+button {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Link text handling */
+a {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Form input text handling */
+input, textarea, select {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Status badges and labels */
+.status-badge, .badge, .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* Team names and titles */
+.team-name, .team-title, .task-title, .report-title {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  line-height: 1.3;
+}
+
+/* Descriptions and content */
+.description, .content, .message, .note {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  line-height: 1.5;
+}
+
+/* Modal content handling */
+.modal-content, .modal-body {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Responsive text sizing */
+@media (max-width: 768px) {
+  h1 { font-size: clamp(20px, 5vw, 32px); }
+  h2 { font-size: clamp(18px, 4vw, 28px); }
+  h3 { font-size: clamp(16px, 3.5vw, 24px); }
+  h4 { font-size: clamp(14px, 3vw, 20px); }
+  h5 { font-size: clamp(12px, 2.5vw, 18px); }
+  h6 { font-size: clamp(10px, 2vw, 16px); }
+  
+  p, span, div {
+    font-size: clamp(12px, 2.5vw, 16px);
+  }
+}
+
+@media (max-width: 480px) {
+  .status-badge, .badge, .label {
+    max-width: 120px;
+    font-size: 11px;
+  }
+  
+  .team-name, .team-title, .task-title, .report-title {
+    font-size: clamp(14px, 4vw, 20px);
+  }
+  
+  .description, .content, .message, .note {
+    font-size: clamp(12px, 3vw, 16px);
+  }
+}

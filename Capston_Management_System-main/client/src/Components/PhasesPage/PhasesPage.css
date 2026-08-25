@@ -1,0 +1,516 @@
+.phases-page {
+    flex: 1;
+    padding: 24px;
+    background-color: #f5f5f5;
+    min-width: 0;
+    overflow-x: hidden;
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .phases-page-header {
+    margin-bottom: 32px;
+    animation: fadeInDown 0.4s ease-out;
+  }
+  
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .phases-page-title {
+    font-size: 30px;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+  }
+
+  .team-info {
+    margin-top: 12px;
+    padding: 8px 16px;
+    background-color: #ebf8ff;
+    border-radius: 8px;
+    display: inline-block;
+  }
+
+  .team-name {
+    color: #3182ce;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  
+  /* Weekly calendar styles (mirrors AdminTasksPage) */
+  .phases-weeks { padding: 20px; }
+  .phases-weeks-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); border-radius: 12px; color: white; box-shadow: 0 2px 4px rgba(229, 62, 62, 0.2); }
+  .phases-weeks-header h2 { margin: 0; font-size: 24px; font-weight: 600; }
+  .phases-weeks .current-week { background: rgba(255, 255, 255, 0.2);border-radius: 20px; font-weight: 500; font-size: 14px; }
+  .weeks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-top: 20px; }
+  .week-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border: 2px solid #e2e8f0; transition: all 0.3s ease; overflow: hidden; }
+  .week-card.current-week { border-color: #e53e3e; box-shadow: 0 4px 20px rgba(229, 62, 62, 0.3); background: linear-gradient(135deg, #fef5f5 0%, #ffffff 100%); }
+  .week-card.completed-week { border-color: #38a169; box-shadow: 0 4px 20px rgba(56, 161, 105, 0.3); background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%); }
+  .week-header { background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
+  .week-card.current-week .week-header { background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); color: white; }
+  .week-card.completed-week .week-header { background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; }
+  .week-title { margin: 0 0 8px 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .current-badge { background: #ff6b6b; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .completed-badge { background: #48bb78; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .week-dates { font-size: 12px; color: #718096; font-weight: 500; }
+  .week-card.current-week .week-dates { color: rgba(255, 255, 255, 0.8); }
+  .week-card.completed-week .week-dates { color: rgba(255, 255, 255, 0.8); }
+  .week-tasks { padding: 16px; min-height: 120px; }
+  .week-task-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; transition: all 0.2s ease; }
+  .week-task-item:hover { background: #edf2f7; border-color: #cbd5e0; }
+  .week-task-content { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%; }
+  .week-task-info { flex: 1; min-width: 0; }
+  .week-task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .week-task-title { margin: 0; font-size: 14px; font-weight: 600; color: #2d3748; line-height: 1.3; }
+  .week-task-description { margin: 0 0 8px 0; font-size: 12px; color: #4a5568; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .week-task-meta { display: flex; gap: 12px; align-items: center; font-size: 11px; color: #718096; }
+  .week-task-action { border: none; border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%); color: white; box-shadow: 0 2px 4px rgba(49, 130, 206, 0.2); }
+  .week-task-action:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(49, 130, 206, 0.3); }
+  .week-empty { display: flex; align-items: center; justify-content: center; color: #a0aec0; font-style: italic; border: 2px dashed #e2e8f0; border-radius: 10px; padding: 30px; background: #fafafa; }
+  
+  .phase-item {
+    background-color: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease-out;
+  }
+
+  /* Deadline passed styling */
+  .phase-item.deadline-passed {
+    border: 2px solid #e53e3e;
+  }
+
+  .phase-item.deadline-passed:hover {
+    box-shadow: 0 4px 16px rgba(229, 62, 62, 0.3);
+  }
+  
+  .phase-item:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  
+  .phase-item:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+  
+  .phase-item:nth-child(3) {
+    animation-delay: 0.15s;
+  }
+  
+  .phase-item:nth-child(4) {
+    animation-delay: 0.2s;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .phase-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(229, 62, 62, 0.05), transparent);
+    transition: left 0.6s;
+  }
+  
+
+  
+  .phase-item:hover::before {
+    left: 100%;
+  }
+  
+  .phase-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .phase-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .phase-item-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+    transition: color 0.3s ease;
+  }
+  
+  .phase-item:hover .phase-item-title {
+    color: #e53e3e;
+  }
+  
+  .phase-item-description {
+    font-size: 14px;
+    color: #718096;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    min-height: 1.6em;
+    display: block;
+    max-width: 100%;
+  }
+  
+  .status-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .phase-item-status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+    transition: all 0.3s ease;
+  }
+
+  .submission-status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+    transition: all 0.3s ease;
+  }
+  
+  .phase-details-button {
+    background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    height: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 16px rgba(229, 62, 62, 0.3);
+    border: 2px solid transparent;
+  }
+  
+  .phase-details-button::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  .phase-details-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s;
+  }
+  
+  .phase-details-button:hover {
+    background: linear-gradient(135deg, #c53030 0%, #a52a2a 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(229, 62, 62, 0.4);
+    border-color: #feb2b2;
+  }
+  
+  .phase-details-button:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .phase-details-button:hover::after {
+    left: 100%;
+  }
+  
+  .phase-details-button:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.5);
+  }
+  
+  /* Long text handling for PhasesPage */
+  .phase-item-title {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    line-height: 1.3;
+    font-size: clamp(16px, 4vw, 20px);
+  }
+
+  .phase-item-description {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(13px, 3.2vw, 14px);
+  }
+
+  .phase-item-status, .submission-status {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
+
+  .phase-details-button {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+
+  /* Deadline Warning Banner */
+  .deadline-warning {
+    background-color: #fed7d7;
+    border: 1px solid #feb2b2;
+    color: #c53030;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    animation: pulse 2s infinite;
+  }
+
+  .deadline-warning svg {
+    color: #e53e3e;
+    flex-shrink: 0;
+  }
+
+  /* Time Remaining Warning */
+  .time-remaining-warning {
+    background-color: #fef5e7;
+    border: 1px solid #fed7aa;
+    color: #d69e2e;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .time-remaining-warning svg {
+    color: #d69e2e;
+    flex-shrink: 0;
+  }
+
+  /* Deadline Info Styling */
+  .deadline-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .phase-item-deadline.deadline-overdue {
+    color: #e53e3e;
+    font-weight: 600;
+  }
+
+  .overdue-indicator {
+    color: #e53e3e;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: #fed7d7;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  /* Overdue Button Styling */
+  .phase-details-button.overdue-btn {
+    background-color: #e53e3e;
+    color: white;
+    font-weight: 600;
+    border: 2px solid #c53030;
+  }
+
+  .phase-details-button.overdue-btn:hover {
+    background-color: #c53030;
+    transform: scale(1.05);
+  }
+
+  /* Pulse animation for deadline warning */
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .phases-page {
+      padding: 16px;
+    }
+    
+    .phases-page-title {
+      font-size: 24px;
+    }
+    
+    .phase-content {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .phase-details-button {
+      align-self: flex-start;
+      margin-top: 8px;
+    }
+
+    .phase-item-title {
+      font-size: clamp(14px, 4vw, 18px);
+    }
+    
+    .phase-item-description {
+      font-size: clamp(12px, 3vw, 13px);
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      min-height: 3.2em; /* 2 lines * 1.6 line-height */
+    }
+    
+    .phase-item-status, .submission-status {
+      max-width: 120px;
+      font-size: 11px;
+    }
+    
+    .phase-details-button {
+      max-width: 120px;
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .phase-item-title {
+      font-size: clamp(12px, 4vw, 16px);
+    }
+    
+    .phase-item-description {
+      font-size: clamp(11px, 3vw, 12px);
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      min-height: 3.2em;
+    }
+    
+    .phase-item-status, .submission-status {
+      max-width: 100px;
+      font-size: 10px;
+    }
+    
+    .phase-details-button {
+      max-width: 100px;
+      font-size: 11px;
+    }
+  }
+
+  /* No Team Message Styling */
+  .no-team-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+  }
+
+  .no-team-message h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .no-team-message p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }

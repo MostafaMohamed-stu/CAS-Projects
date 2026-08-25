@@ -1,0 +1,90 @@
+.time-manager {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.5s ease-out;
+  width: 100%;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.time-manager-header {
+  margin-bottom: 16px;
+}
+
+.time-manager-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.time-manager-subtitle {
+  font-size: 14px;
+  color: #718096;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #e53e3e;
+  background: linear-gradient(90deg, #e53e3e, #ff6b6b, #e53e3e);
+  background-size: 200% 100%;
+  transition: width 0.3s ease;
+  animation: progressShine 2s linear infinite;
+}
+
+@keyframes progressShine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.progress-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e53e3e;
+  white-space: nowrap;
+}
+
+.task-summary {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.task-summary p {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+
