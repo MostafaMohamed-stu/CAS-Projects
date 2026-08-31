@@ -1,4 +1,4 @@
-using CAS_Login_Back_End.Data;
+﻿using CAS_Login_Back_End.Data;
 using CAS_Login_Back_End.Models.Common;
 using CAS_Login_Back_End.Models.Configuration;
 using CAS_Login_Back_End.Middleware;
@@ -222,3 +222,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

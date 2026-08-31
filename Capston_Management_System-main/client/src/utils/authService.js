@@ -8,7 +8,7 @@ const REFRESH_BEFORE_EXPIRY_MINUTES = 1; // Refresh 1 minute before expiry
 const REFRESH_DELAY_MS = (ACCESS_TOKEN_LIFETIME_MINUTES - REFRESH_BEFORE_EXPIRY_MINUTES) * 60 * 1000; // 14 minutes
 
 // In-memory state for tokens and user data
-let accessToken = null;
+let accessToken = localStorage.getItem('accessToken') || localStorage.getItem('token') || null;
 let userData = null;
 let isRefreshing = false;
 let refreshTimeout = null;
@@ -43,8 +43,7 @@ const setAccessTokenAndScheduleRefresh = (token) => {
     return;
   }
   
-  accessToken = token;
-  
+  accessToken = token; if (token) { localStorage.setItem('accessToken', token); localStorage.setItem('token', token); } else { localStorage.removeItem('accessToken'); localStorage.removeItem('token'); }
   // Clear existing timeout
   if (refreshTimeout) {
     clearTimeout(refreshTimeout);
@@ -257,9 +256,7 @@ export const authService = {
     userData = userDataParam;
   },
 
-  getAccessToken() {
-    return accessToken;
-  },
+  getAccessToken() { return accessToken || localStorage.getItem('accessToken') || localStorage.getItem('token'); },
 
   setAccessToken(token) {
     setAccessTokenAndScheduleRefresh(token);
